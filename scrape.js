@@ -42,53 +42,98 @@ function parseLines(lines) {
     comments: []
   }
 
-  let courses = []
-  let currentCourse = { }
+  let sections = []
+  let currentSection = { }
+
+  const LINE_TYPE_SECTION_COMMENT        = Symbol()
+  const LINE_TYPE_INTERVAL_FIRST         = Symbol()
+  const LINE_TYPE_INTERVAL_LAB           = Symbol()
+  const LINE_TYPE_INTERVAL_GENERAL       = Symbol()
+  const LINE_TYPE_INTERVAL_COMMENT       = Symbol()
+  const LINE_TYPE_INTERVAL_EXTRA_TEACHER = Symbol()
+
+  let currentLineType
 
   lines.forEach(function(line) {
 
     const enrollmentAvailable = line.slice(0, 3).trim()
     const enrollmentCount     = line.slice(5, 9).trim()
+    const lineTrim            = line.trim()
 
-    // In these two cases
+    // Replace to ensure that all lines are the same max-width
+    line.replace("&amp;", "&")
 
-    if (
-      enrollmentAvailable !== "" ||
-      line.trim()
-    )
+    // The following conditions signify the start of a new "section" context.
 
+    // (1) If enrollmentAvailable is not empty, it is either a number or "(F)"
+    // (2) If the line begins with "***" it indicates a section-wide comment
+    //      - If the current course object has properties, we add the comment onto
+    //        the existing course.
+    //      - If the current course object has no properties, it is indicated
+    //        that this is the beginning of a new "section" context
 
-    // If the current line begins with either of the following conditions, it
-    // indicates that information for a new section has started.
+    const isSectionComment = lineTrim.startsWith("***")
 
-    // If this line begins with "***", it is a section-wide comment
+    const firstCondition  = enrollmentAvailable !== ""
+    const secondCondition = isSectionComment && !currentSection.enrollmentAvailable
 
-    if (line.trim().startsWith("***")) {
+    // If one of either conditions are met, start a new "section" context
 
-      // If the current course object has no comments and no enrollment information 
-
-      if (!currentCourse.comments && !currentCourse.enrollmentAvailable) {
-        courses.push(currentCourse)
-        currentCourse = {}
-      }
-
+    if (firstCondition || secondCondition) { 
+      sections.push(currentSection)
+      currentSection = { comments: [] }
     }
 
-    if (enrollmentAvailable.trim() !== "") {
+    // DETERMINE LINE TYPE
 
-      if (currentCourse.comments) {
-
-      }
-
+    // Section Comment: A section-wide comment applying to all time intervals (Can have multiple)
+    // Ex. '      ***   CSC  7080  ***       CROSS-LISTED WITH   EE 7720'
+    if (isSectionComment) {
+      currentLineType = LINE_TYPE_SECTION_COMMENT
     }
 
-    if (
-      (enrollmentAvailable.trim() !== "" || line.trim().startsWith("***"))
-      && currentCourse !== { }
-    ) {
-      courses.push(currentCourse)
-      currentCourse = { }
+    // Interval General: The start of a generalized interval. Things such as per-interval comments,
+    // additional professors, or additional time intervals could follow.
+    // Ex.  '  1    33  CSC  1351         1  COMP SCI II-MJRS       4.0   900-1020    T TH  0221 TUREAUD HALL                     BRANDT S'
+    if (enrollmentAvailable !== "") {
+      currentLineType = LINE_TYPE_INTERVAL_FIRST
     }
+
+    // Extra Teacher: Indicates an extra teacher is being added to the most recently added time interval
+    if (line.slice(0, 116).trim() === "") {
+      currentLineType = LINE_TYPE_INTERVAL_EXTRA_TEACHER
+    }
+
+    // Interval Comment: Indicates the start of an interval comment, not a section-wide comment. This comment
+    // is to be added specifically to the most recently added interval.
+    if (lineTrim.startsWith("**") && !lineTrim.startsWith("***")) {
+      currentLineType = LINE_TYPE_INTERVAL_COMMENT
+    }
+
+    // Lab Interval: Indicates the start of an interval with type lab.
+    // Ex. '                     LAB                                     500-0750N     TH                                        BRANDT S',
+    if (lineTrim.startsWith("LAB")) {
+      currentLineType = LINE_TYPE_INTERVAL_LAB
+    }
+
+    // General Additional Interval: This indicates the start of an additional time interval for this section. Some
+    // sections have different times or buildings on certain days, therefore there can be multiple time intervals.
+    // Ex. '                                                        1130-1220    T     0138 LOCKETT'
+    if (line.slice(0, 57).trim() === "" && line.contains("-")) {
+      currentLineType = LINE_TYPE_INTERVAL_GENERAL
+    }
+
+
+    // HERE: Everything after this point is un-refactored.
+    // It was an initial try of the algorithm that I may keep some of, but not all of. Will change.
+
+    // LINE TYPE: Section-Wide Comment
+
+    if (isSectionComment) {
+      currentSection.comments.push(line)
+    }
+
+    // LINE TYPE:
 
     // Begin processing the information for the section, either adding to the section of past
     // lines or adding to the new section reset by a starting condition.
@@ -102,8 +147,8 @@ function parseLines(lines) {
       // but that the section being started has one of more section-wide comments.
 
       if (line.trim().startsWith("***")) {
-        if (!currentCourse.comments) currentCourse.comments = []
-        currentCourse.comments.push(line.trim())
+        if (!currentSection.comments) currentSection.comments = []
+        currentSection.comments.push(line.trim())
       }
 
     } else {
@@ -113,20 +158,20 @@ function parseLines(lines) {
     }
 
     if (enrollmentAvailable.includes("(F)")) {
-      currentCourse.enrollmentFull = true
+      currentSection.enrollmentFull = true
     }
 
     if (isNumber(enrollmentAvailable)) {
-      currentCourse.enrollmentAvailable = Number(enrollmentAvailable)
+      currentSection.enrollmentAvailable = Number(enrollmentAvailable)
     }
 
     if (isNumber(enrollmentCount)) {
-      currentCourse.enrollmentCurrent = Number(enrollmentCount)
-      if (currentCourse.enrollmentFull) currentCourse.enrollmentTotal = Number(enrollmentCount)
-      else currentCourse.enrollmentTotal = Number(enrollmentCount) + Number(enrollmentAvailable)
+      currentSection.enrollmentCurrent = Number(enrollmentCount)
+      if (currentSection.enrollmentFull) currentSection.enrollmentTotal = Number(enrollmentCount)
+      else currentSection.enrollmentTotal = Number(enrollmentCount) + Number(enrollmentAvailable)
     }
 
-    console.log(currentCourse)
+    console.log(currentSection)
 
   })
 
