@@ -81,7 +81,10 @@ function parseLines(lines) {
 
     if (firstCondition || secondCondition) { 
       sections.push(currentSection)
-      currentSection = { comments: [] }
+      currentSection = {
+        comments: [],
+        timeIntervals: []
+      }
     }
 
     // DETERMINE LINE TYPE
@@ -92,7 +95,7 @@ function parseLines(lines) {
       currentLineType = LINE_TYPE_SECTION_COMMENT
     }
 
-    // Interval General: The start of a generalized interval. Things such as per-interval comments,
+    // Interval First: The start of a generalized interval. Things such as per-interval comments,
     // additional professors, or additional time intervals could follow.
     // Ex.  '  1    33  CSC  1351         1  COMP SCI II-MJRS       4.0   900-1020    T TH  0221 TUREAUD HALL                     BRANDT S'
     if (enrollmentAvailable !== "") {
@@ -119,62 +122,88 @@ function parseLines(lines) {
     // General Additional Interval: This indicates the start of an additional time interval for this section. Some
     // sections have different times or buildings on certain days, therefore there can be multiple time intervals.
     // Ex. '                                                        1130-1220    T     0138 LOCKETT'
-    if (line.slice(0, 57).trim() === "" && line.contains("-")) {
+    if (line.slice(0, 57).trim() === "" && line.includes("-")) {
       currentLineType = LINE_TYPE_INTERVAL_GENERAL
     }
 
+    switch(currentLineType) {
 
-    // HERE: Everything after this point is un-refactored.
-    // It was an initial try of the algorithm that I may keep some of, but not all of. Will change.
+      case LINE_TYPE_SECTION_COMMENT:
+        currentSection.comments.push(line)
 
-    // LINE TYPE: Section-Wide Comment
-
-    if (isSectionComment) {
-      currentSection.comments.push(line)
-    }
-
-    // LINE TYPE:
-
-    // Begin processing the information for the section, either adding to the section of past
-    // lines or adding to the new section reset by a starting condition.
-
-    if (enrollmentAvailable.trim() === "") {
-
-      // If the "Enrolllment Available" column is empty, this means that something other
-      // than the start of a new section is starting.
-
-      // If the line, after a trim, begins with "***", this indicates a new section has started,
-      // but that the section being started has one of more section-wide comments.
-
-      if (line.trim().startsWith("***")) {
-        if (!currentSection.comments) currentSection.comments = []
-        currentSection.comments.push(line.trim())
-      }
-
-    } else {
-
-      // If the "Enrollment Available" column is not empty, this means a new section has started.
+      case LINE_TYPE_INTERVAL_FIRST:
+        currentSection.timeIntervals.push(parseIntervalLine(line))
 
     }
 
-    if (enrollmentAvailable.includes("(F)")) {
-      currentSection.enrollmentFull = true
-    }
 
-    if (isNumber(enrollmentAvailable)) {
-      currentSection.enrollmentAvailable = Number(enrollmentAvailable)
-    }
+    // // HERE: Everything after this point is un-refactored.
+    // // It was an initial try of the algorithm that I may keep some of, but not all of. Will change.
 
-    if (isNumber(enrollmentCount)) {
-      currentSection.enrollmentCurrent = Number(enrollmentCount)
-      if (currentSection.enrollmentFull) currentSection.enrollmentTotal = Number(enrollmentCount)
-      else currentSection.enrollmentTotal = Number(enrollmentCount) + Number(enrollmentAvailable)
-    }
+    // // Begin processing the information for the section, either adding to the section of past
+    // // lines or adding to the new section reset by a starting condition.
 
-    console.log(currentSection)
+    // if (enrollmentAvailable.trim() === "") {
+
+    //   // If the "Enrolllment Available" column is empty, this means that something other
+    //   // than the start of a new section is starting.
+
+    //   // If the line, after a trim, begins with "***", this indicates a new section has started,
+    //   // but that the section being started has one of more section-wide comments.
+
+    //   if (line.trim().startsWith("***")) {
+    //     if (!currentSection.comments) currentSection.comments = []
+    //     currentSection.comments.push(line.trim())
+    //   }
+
+    // } else {
+
+    //   // If the "Enrollment Available" column is not empty, this means a new section has started.
+
+    // }
+
+    // if (enrollmentAvailable.includes("(F)")) {
+    //   currentSection.enrollmentFull = true
+    // }
+
+    // if (isNumber(enrollmentAvailable)) {
+    //   currentSection.enrollmentAvailable = Number(enrollmentAvailable)
+    // }
+
+    // if (isNumber(enrollmentCount)) {
+    //   currentSection.enrollmentCurrent = Number(enrollmentCount)
+    //   if (currentSection.enrollmentFull) currentSection.enrollmentTotal = Number(enrollmentCount)
+    //   else currentSection.enrollmentTotal = Number(enrollmentCount) + Number(enrollmentAvailable)
+    // }
 
   })
 
+}
+
+
+  
+//     ENRL   COURSE         SEC                          HR     TIME     DAYS                         SPECIAL
+//AVL  CNT   ABBR NUM  TYPE  NUM  COURSE TITLE            CR  BEGIN-END   MTWTFS ROOM  BUILDING        ENROLLMENT      INSTRUCTOR
+//----------------------------------------------------------------------------------------------------------------------------------
+//   4     10    16   21   26   31                     54   59         70       79   84             99               118           132       
+// 53    47  CHE  2171         2  CHE FUND MAT EN BAL    3.0   930-1020   M W F  0204 TUREAUD HALL                     BENTON M
+//(F)     7  CHE  3104         1  ENGR MEASUREMENT LAB   3.0  1230-0120   M W    1221 PATRICK TAYLOR  CI-WRITTEN&SPOK  MELVIN E
+function parseIntervalLine(line) {
+  const enrollmentAvailable = line.slice(0, 4).trim()
+  const enrollmentCount = line.slice(4, 10).trim()
+  const courseAbbreviation = line.slice(10, 16).trim()
+  const courseNumber = line.slice(16, 21).trim()
+  const sectionType = line.slice(21, 26).trim()
+  const sectionNumber = line.slice(26, 31).trim()
+  const sectionTitle = line.slice(31, 54).trim()
+  const courseHours = line.slice(54, 59).trim()
+  const timeInteval = line.slice(59, 70).trim()
+  const days = line.slice(70, 79).trim()
+  const roomNumber = line.slice(79, 84).trim()
+  const buildingName = line.slice(84, 99).trim()
+  const specialEnrollment = line.slice(99, 118).trim()
+
+  console.log({ courseNumber, sectionNumber, sectionTitle, days, buildingName, enrollmentAvailable, enrollmentCount})
 }
 
 function isNumber(num) {
