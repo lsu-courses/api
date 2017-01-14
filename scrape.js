@@ -2,13 +2,15 @@
 const request = require("request")
 const cheerio = require("cheerio")
 
+const pretty = require("./pretty")
+
 const config = department => ({
   method : "post",
   url    : "http://appl101.lsu.edu/booklet2.nsf/68a84f901daef98386257b43006b778a?CreateDocument",
   body   : `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Spring+2017&%25%25Surrogate_Department=1&Department=${department}`
 })
 
-const departments = ["COMPUTER SCIENCE"]
+const departments = ["HONORS"]
 
 function scrape() {
   departments.forEach(department => request(config(department), onResponse))
@@ -61,7 +63,7 @@ function parseLines(lines) {
     const lineTrim            = line.trim()
 
     // Replace to ensure that all lines are the same max-width
-    line.replace("&amp;", "&")
+    line = line.replace(/&amp;/g, '&').replace(/&apos;/g, '\'')
 
     // The following conditions signify the start of a new "section" context.
 
@@ -189,21 +191,101 @@ function parseLines(lines) {
 // 53    47  CHE  2171         2  CHE FUND MAT EN BAL    3.0   930-1020   M W F  0204 TUREAUD HALL                     BENTON M
 //(F)     7  CHE  3104         1  ENGR MEASUREMENT LAB   3.0  1230-0120   M W    1221 PATRICK TAYLOR  CI-WRITTEN&SPOK  MELVIN E
 function parseIntervalLine(line) {
-  const enrollmentAvailable = line.slice(0, 4).trim()
-  const enrollmentCount = line.slice(4, 10).trim()
-  const courseAbbreviation = line.slice(10, 16).trim()
-  const courseNumber = line.slice(16, 21).trim()
-  const sectionType = line.slice(21, 26).trim()
-  const sectionNumber = line.slice(26, 31).trim()
-  const sectionTitle = line.slice(31, 54).trim()
-  const courseHours = line.slice(54, 59).trim()
-  const timeInteval = line.slice(59, 70).trim()
-  const days = line.slice(70, 79).trim()
-  const roomNumber = line.slice(79, 84).trim()
-  const buildingName = line.slice(84, 99).trim()
-  const specialEnrollment = line.slice(99, 118).trim()
 
-  console.log({ courseNumber, sectionNumber, sectionTitle, days, buildingName, enrollmentAvailable, enrollmentCount})
+  const enrollmentAvailable = line.slice(0, 4).trim()
+  const enrollmentCount     = line.slice(4, 10).trim()
+  let enrollmentFull        = enrollmentAvailable === "(F)"
+
+  const courseAbbreviation = line.slice(10, 16).trim()
+  const courseNumber       = line.slice(16, 21).trim()
+  const courseHours        = line.slice(54, 59).trim()
+  
+  const sectionType   = line.slice(21, 26).trim()
+  const sectionNumber = line.slice(26, 31).trim()
+  const sectionTitle  = line.slice(31, 54).trim()
+
+  const timeInterval = line.slice(59, 70).trim()
+  const days         = line.slice(72, 78)
+  let hasTime        = timeInterval.includes("-")
+  let times          = timeInterval.split("-")
+  let startTime      = times[0]
+  let endTime        = times[1]
+  let isNight        = timeInterval.includes("N")
+  const dayArray     = []
+
+  if (days.includes("H")) {
+    if (findOccurences(days, "T") === 2) Array.prototype.push.apply(dayArray, ["TUESDAY", "THURSDAY"])
+    else dayArray.push("THURSDAY")
+  }
+
+  else {
+    if (days.includes("M")) dayArray.push("MONDAY")
+    if (days.charAt(1) === "T") dayArray.push("TUESDAY")
+    if (days.includes("W")) dayArray.push("WEDNESDAY")
+    if (days.charAt(3) === "T") dayArray.push("THURSDAY")
+    if (days.includes("F")) dayArray.push("FRIDAY") 
+  }
+
+  const roomNumber   = line.slice(79, 84).trim()
+  const buildingName = line.slice(84, 99).trim()
+
+  const specialEnrollment = line.slice(100, 116).trim()
+  const isWebBased        = specialEnrollment.includes("WEB BASE")
+  const isComIntensive    = specialEnrollment.includes("CI-WRITTEN&SPOK")
+
+  const teacher = line.slice(117, line.length - 1)
+
+  const r = {
+
+    enrollment: {
+      available : enrollmentFull ? 0 : Number(enrollmentAvailable),
+      current   : Number(enrollmentCount),
+      total     : enrollmentFull ? Number(enrollmentCount) : Number(enrollmentCount) + Number(enrollmentAvailable),
+      isFull    : enrollmentFull,
+    },
+
+    course: {
+      abbreviation : courseAbbreviation,
+      number       : courseNumber,
+      hours        : courseHours,
+
+      special      : {
+        text           : specialEnrollment,
+        isComIntensive : isComIntensive,
+        isWebBased     : isWebBased
+      }
+    },
+
+    section: {
+      type    : sectionType,
+      number  : sectionNumber,
+      title   : sectionTitle,
+      teacher : teacher,
+
+      location: {
+        building : buildingName,
+        room     : roomNumber,
+      },
+
+      time: {
+        start   : startTime,
+        end     : endTime,
+        hasTime : hasTime,
+        isNight : isNight,
+        days    : dayArray,
+      }
+
+    }
+
+  }
+
+  console.log("\n" + pretty(r) + "\n")
+
+  return r
+}
+
+function findOccurences(string, ofChar){
+  return string.split(ofChar).length - 1;
 }
 
 function isNumber(num) {
