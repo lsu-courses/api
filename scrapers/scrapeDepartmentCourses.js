@@ -51,7 +51,7 @@ const parseLines = lines => {
   let currentSectionInfo = { comments: [] }
 
   for (let i = 3; i < lines.length - 1; i++) {
-    let line = lines[i].replace(/&amp/g, "&").replace(/&apos/g, "'")
+    let line = lines[i].replace(/&amp;/g, "&").replace(/&apos;/g, "'")
 
     const enrollmentAvailable = line.slice(0, 3).trim()
     const lineTrim = line.trim()
@@ -201,11 +201,11 @@ const parseIntervalLine = line => {
 
   const timeInterval = line.slice(59, 70).trim()
   const days = line.slice(72, 78)
-  let hasTime = timeInterval.includes("-")
-  let times = timeInterval.split("-")
-  let startTime = times[0]
-  let endTime = times[1]
-  let isNight = timeInterval.includes("N")
+  const hasTime = timeInterval.includes("-")
+  const times = timeInterval.split("-")
+  const startTime = times[0]
+  const endTime = times[1]
+  const isNight = timeInterval.includes("N")
   const dayArray = []
 
   if (days.includes("H"))
@@ -226,7 +226,7 @@ const parseIntervalLine = line => {
   const isWebBased = specialEnrollment.includes("WEB BASE")
   const isComIntensive = specialEnrollment.includes("CI-WRITTEN&SPOK")
 
-  const teacher = line.slice(117, line.length - 1)
+  const instructorName = line.slice(117, line.length - 1)
 
   return {
     enrollment: {
@@ -252,7 +252,7 @@ const parseIntervalLine = line => {
       isLab: isLab,
       number: sectionNumber,
       title: sectionTitle,
-      teacher: teacher,
+      instructor: instructorName,
       location: { building: buildingName, room: roomNumber },
       time: {
         start: startTime,
