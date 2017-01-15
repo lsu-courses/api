@@ -10,7 +10,7 @@ const config = department => ({
   body   : `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Spring+2017&%25%25Surrogate_Department=1&Department=${department}`
 })
 
-const departments = ["CHILD AND FAMILY STUDIES"]
+const departments = ["COMPUTER SCIENCE"]
 
 function scrape() {
   departments.forEach(department => request(config(department), onResponse))
@@ -46,7 +46,9 @@ function parseLines(lines) {
 
   let sections = []
   let currentSection
-  let currentSectionComments = []
+  let currentSectionInfo = {
+    comments: [],
+  }
 
   const LINE_TYPE_SECTION_COMMENT        = Symbol()
   const LINE_TYPE_INTERVAL_FIRST         = Symbol()
@@ -76,22 +78,26 @@ function parseLines(lines) {
     // Replace to ensure that all lines are the same max-width
     line = line.replace(/&amp;/g, '&').replace(/&apos;/g, '\'')
 
+    // DETERMINE CURRENT SECTION:
+    // Determine if the criteria to switch to a new section is met
+
     // If enrollmentAvailable is not empty, it is either a number or "(F)", indicating
     // that a new section has begun.
 
     if (enrollmentAvailable !== "") {
 
       if (currentSection) {
-        console.log("SECTION TO ADD COMMENTS: " + JSON.stringify(currentSection.course.comments))
         sections.push(currentSection)
       }
 
       currentSection = {
-        course: { comments: currentSectionComments }
+        course: { comments: currentSectionInfo.comments }
       }
     }
 
-    // DETERMINE LINE TYPE
+    // DETERMINE LINE TYPE:
+    // Determine the type of the current line. Do not process any information
+    // that alters state.
 
     // Section Comment: A section-wide comment applying to all time intervals (Can have multiple)
     // Ex. '      ***   CSC  7080  ***       CROSS-LISTED WITH   EE 7720'
@@ -130,104 +136,36 @@ function parseLines(lines) {
       currentLineType = LINE_TYPE_INTERVAL_GENERAL
     }
 
-    // EXAMPLE OF FINAL PARSING OBJECT (this object never gets used, it is just for me to look at while coding)
-    const example = {
-      course: {
-        comments: []
-      },
-      section: {
-        enrollment: { },
-        intervals: [
-          {
-            teachers: [],
-            time: { },
-            location: { },
-            comments: [ ],
-          }
-        ]
-      }
+    // PROCESS LINES:
+    // Process the information of the current line contextually based on the
+    // determined line type
+
+    if (currentLineType === LINE_TYPE_SECTION_COMMENT) {
+      currentSectionInfo.comments.push(line)
     }
 
-    // Process line based on line type
-
-    switch(currentLineType) {
-
-      case LINE_TYPE_SECTION_COMMENT:
-        console.log("ADDING COMMENT: " + line)
-        currentSectionComments.push(line)
-        break
-
-      case LINE_TYPE_INTERVAL_FIRST:
-        let parsedLine = parseIntervalLine(line)
-        let comments   = currentSection.course.comments
-        currentSection.course = parsedLine.course
-        currentSection.course.comments = comments
-        currentSectionComments = []
-        currentSection.section = {
-          enrollment: parsedLine.enrollment,
-          intervals: [
-            {
-              teachers: [parsedLine.section.teacher],
-              comments: [],
-              type: parsedLine.section.type,
-              isLab: parsedLine.section.isLab,
-              number: parsedLine.section.number,
-              title: parsedLine.section.title,
-              location: parsedLine.section.location,
-            }
-          ]
-        }
-        break
-
-      case LINE_TYPE_INTERVAL_COMMENT:
-        console.log("ADDING COMMENT: " + line)
-        let intervals = currentSection.section.intervals
-        intervals[intervals.length - 1].comments.push(line)
-        break
-
-
+    if (currentLineType === LINE_TYPE_INTERVAL_FIRST) {
+      let parsedLine = parseIntervalLine(line)
+      setupCourse(currentSection, currentSectionInfo, parsedLine)
+      addInterval(currentSection, parsedLine)
     }
 
+    if (
+      currentLineType === LINE_TYPE_INTERVAL_GENERAL ||
+      currentLineType === LINE_TYPE_INTERVAL_LAB
+    ) {
+      let parsedLine = parseIntervalLine(line)
+      addInterval(currentSection, parsedLine)
+    }
 
-    // // HERE: Everything after this point is un-refactored.
-    // // It was an initial try of the algorithm that I may keep some of, but not all of. Will change.
-    // Probably keeping none of this, but need it for reference while I am redoing it
+    if (currentLineType === LINE_TYPE_INTERVAL_COMMENT) {
+      getCurrentInterval(currentSection).comments.push(line)
+      processComment(currentSection, line)
+    }
 
-    // // Begin processing the information for the section, either adding to the section of past
-    // // lines or adding to the new section reset by a starting condition.
-
-    // if (enrollmentAvailable.trim() === "") {
-
-    //   // If the "Enrolllment Available" column is empty, this means that something other
-    //   // than the start of a new section is starting.
-
-    //   // If the line, after a trim, begins with "***", this indicates a new section has started,
-    //   // but that the section being started has one of more section-wide comments.
-
-    //   if (line.trim().startsWith("***")) {
-    //     if (!currentSection.comments) currentSection.comments = []
-    //     currentSection.comments.push(line.trim())
-    //   }
-
-    // } else {
-
-    //   // If the "Enrollment Available" column is not empty, this means a new section has started.
-
-    // }
-
-    // if (enrollmentAvailable.includes("(F)")) {
-    //   currentSection.enrollmentFull = true
-    // }
-
-    // if (isNumber(enrollmentAvailable)) {
-    //   currentSection.enrollmentAvailable = Number(enrollmentAvailable)
-    // }
-
-    // if (isNumber(enrollmentCount)) {
-    //   currentSection.enrollmentCurrent = Number(enrollmentCount)
-    //   if (currentSection.enrollmentFull) currentSection.enrollmentTotal = Number(enrollmentCount)
-    //   else currentSection.enrollmentTotal = Number(enrollmentCount) + Number(enrollmentAvailable)
-    // }
+    if (currentLineType === LINE_TYPE_INTERVAL_EXTRA_TEACHER) {
+      getCurrentInterval(currentSection).teachers.push(line.trim())
+    }
 
   })
 
@@ -235,7 +173,47 @@ function parseLines(lines) {
 
 }
 
+// A functional reducer-like function that takes comments, and the current interval,
+// and affects the state of the current interval based on the context of the comment.
+function processComment(currentSection, line) {
+  let interval = getCurrentInterval(currentSection)
+  const cleanLine = line.replace("**", "").trim()
 
+  if (cleanLine.includes("LAB WILL BE HELD IN ")) {
+    let comment = cleanLine.split(" ")
+    interval.location.building = comment[6]
+    interval.location.room     = comment[5]
+  }
+
+}
+
+function getCurrentInterval(currentSection) {
+  return currentSection.section.intervals[currentSection.section.intervals.length - 1]
+}
+
+function setupCourse(currentSection, currentSectionInfo, parsedLine) {
+  let comments   = currentSection.course.comments
+  currentSection.course = parsedLine.course
+  currentSection.course.comments = comments
+  currentSectionInfo.comments = []
+  currentSection.section = {
+    enrollment: parsedLine.enrollment,
+    intervals: [ ]
+  }
+}
+
+function addInterval(currentSection, parsedLine) {
+  currentSection.section.intervals.push({
+    teachers: [parsedLine.section.teacher],
+    comments: [],
+    type: parsedLine.section.type,
+    isLab: parsedLine.section.isLab,
+    number: parsedLine.section.number,
+    title: parsedLine.section.title,
+    location: parsedLine.section.location,
+    time: parsedLine.section.time,
+  })
+}
   
 //     ENRL   COURSE         SEC                          HR     TIME     DAYS                         SPECIAL
 //AVL  CNT   ABBR NUM  TYPE  NUM  COURSE TITLE            CR  BEGIN-END   MTWTFS ROOM  BUILDING        ENROLLMENT      INSTRUCTOR
