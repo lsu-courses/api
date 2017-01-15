@@ -10,7 +10,7 @@ const config = department => ({
   body   : `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Spring+2017&%25%25Surrogate_Department=1&Department=${department}`
 })
 
-const departments = ["HONORS"]
+const departments = ["CHILD AND FAMILY STUDIES"]
 
 function scrape() {
   departments.forEach(department => request(config(department), onResponse))
@@ -45,7 +45,8 @@ function parseLines(lines) {
   }
 
   let sections = []
-  let currentSection = { }
+  let currentSection
+  let currentSectionComments = []
 
   const LINE_TYPE_SECTION_COMMENT        = Symbol()
   const LINE_TYPE_INTERVAL_FIRST         = Symbol()
@@ -58,6 +59,16 @@ function parseLines(lines) {
 
   lines.forEach(function(line) {
 
+    // Conditions to reject the processing of a line
+
+    const isLineBlank   = line.trim() === ""
+    const isLineBullets = line.includes("---------------------------")
+    const isLineTitle   = line.trim().startsWith("ENRL") || line.trim().startsWith("AVL")
+
+    if (isLineBlank || isLineBullets || isLineTitle) {
+      return
+    }
+
     const enrollmentAvailable = line.slice(0, 3).trim()
     const enrollmentCount     = line.slice(5, 9).trim()
     const lineTrim            = line.trim()
@@ -65,27 +76,18 @@ function parseLines(lines) {
     // Replace to ensure that all lines are the same max-width
     line = line.replace(/&amp;/g, '&').replace(/&apos;/g, '\'')
 
-    // The following conditions signify the start of a new "section" context.
+    // If enrollmentAvailable is not empty, it is either a number or "(F)", indicating
+    // that a new section has begun.
 
-    // (1) If enrollmentAvailable is not empty, it is either a number or "(F)"
-    // (2) If the line begins with "***" it indicates a section-wide comment
-    //      - If the current course object has properties, we add the comment onto
-    //        the existing course.
-    //      - If the current course object has no properties, it is indicated
-    //        that this is the beginning of a new "section" context
+    if (enrollmentAvailable !== "") {
 
-    const isSectionComment = lineTrim.startsWith("***")
+      if (currentSection) {
+        console.log("SECTION TO ADD COMMENTS: " + JSON.stringify(currentSection.course.comments))
+        sections.push(currentSection)
+      }
 
-    const firstCondition  = enrollmentAvailable !== ""
-    const secondCondition = isSectionComment && !currentSection.enrollmentAvailable
-
-    // If one of either conditions are met, start a new "section" context
-
-    if (firstCondition || secondCondition) { 
-      sections.push(currentSection)
       currentSection = {
-        comments: [],
-        timeIntervals: []
+        course: { comments: currentSectionComments }
       }
     }
 
@@ -93,7 +95,7 @@ function parseLines(lines) {
 
     // Section Comment: A section-wide comment applying to all time intervals (Can have multiple)
     // Ex. '      ***   CSC  7080  ***       CROSS-LISTED WITH   EE 7720'
-    if (isSectionComment) {
+    if (lineTrim.startsWith("***")) {
       currentLineType = LINE_TYPE_SECTION_COMMENT
     }
 
@@ -128,19 +130,68 @@ function parseLines(lines) {
       currentLineType = LINE_TYPE_INTERVAL_GENERAL
     }
 
+    // EXAMPLE OF FINAL PARSING OBJECT (this object never gets used, it is just for me to look at while coding)
+    const example = {
+      course: {
+        comments: []
+      },
+      section: {
+        enrollment: { },
+        intervals: [
+          {
+            teachers: [],
+            time: { },
+            location: { },
+            comments: [ ],
+          }
+        ]
+      }
+    }
+
+    // Process line based on line type
+
     switch(currentLineType) {
 
       case LINE_TYPE_SECTION_COMMENT:
-        currentSection.comments.push(line)
+        console.log("ADDING COMMENT: " + line)
+        currentSectionComments.push(line)
+        break
 
       case LINE_TYPE_INTERVAL_FIRST:
-        currentSection.timeIntervals.push(parseIntervalLine(line))
+        let parsedLine = parseIntervalLine(line)
+        let comments   = currentSection.course.comments
+        currentSection.course = parsedLine.course
+        currentSection.course.comments = comments
+        currentSectionComments = []
+        currentSection.section = {
+          enrollment: parsedLine.enrollment,
+          intervals: [
+            {
+              teachers: [parsedLine.section.teacher],
+              comments: [],
+              type: parsedLine.section.type,
+              isLab: parsedLine.section.isLab,
+              number: parsedLine.section.number,
+              title: parsedLine.section.title,
+              location: parsedLine.section.location,
+            }
+          ]
+        }
+        break
+
+      case LINE_TYPE_INTERVAL_COMMENT:
+        console.log("ADDING COMMENT: " + line)
+        let intervals = currentSection.section.intervals
+        intervals[intervals.length - 1].comments.push(line)
+        break
+
 
     }
 
 
     // // HERE: Everything after this point is un-refactored.
     // // It was an initial try of the algorithm that I may keep some of, but not all of. Will change.
+    // Probably keeping none of this, but need it for reference while I am redoing it
 
     // // Begin processing the information for the section, either adding to the section of past
     // // lines or adding to the new section reset by a starting condition.
@@ -180,6 +231,8 @@ function parseLines(lines) {
 
   })
 
+  console.log(pretty(sections))
+
 }
 
 
@@ -201,6 +254,7 @@ function parseIntervalLine(line) {
   const courseHours        = line.slice(54, 59).trim()
   
   const sectionType   = line.slice(21, 26).trim()
+  const isLab         = sectionType.includes("LAB")
   const sectionNumber = line.slice(26, 31).trim()
   const sectionTitle  = line.slice(31, 54).trim()
 
@@ -258,6 +312,7 @@ function parseIntervalLine(line) {
 
     section: {
       type    : sectionType,
+      isLab   : isLab,
       number  : sectionNumber,
       title   : sectionTitle,
       teacher : teacher,
@@ -279,7 +334,7 @@ function parseIntervalLine(line) {
 
   }
 
-  console.log("\n" + pretty(r) + "\n")
+  //console.log("\n" + pretty(r) + "\n")
 
   return r
 }
