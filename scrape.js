@@ -159,7 +159,6 @@ function parseLines(lines) {
     }
 
     if (currentLineType === LINE_TYPE_INTERVAL_COMMENT) {
-      getCurrentInterval(currentSection).comments.push(line)
       processComment(currentSection, line)
     }
 
@@ -177,14 +176,19 @@ function parseLines(lines) {
 // and affects the state of the current interval based on the context of the comment.
 function processComment(currentSection, line) {
   let interval = getCurrentInterval(currentSection)
-  const cleanLine = line.replace("**", "").trim()
 
   if (cleanLine.includes("LAB WILL BE HELD IN ")) {
-    let comment = cleanLine.split(" ")
-    interval.location.building = comment[6]
-    interval.location.room     = comment[5]
+    const comment = line.replace("**", "").trim()
+    let commentSections = comment.split(" ")
+
+    interval.comments.push(comment)
+
+    interval.location.building = commentSections[6]
+    interval.location.room     = commentSections[5]
+    return
   }
 
+  intervals.comments.push(line)
 }
 
 function getCurrentInterval(currentSection) {
