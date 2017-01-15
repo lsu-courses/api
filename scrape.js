@@ -177,7 +177,7 @@ function parseLines(lines) {
 function processComment(currentSection, line) {
   let interval = getCurrentInterval(currentSection)
 
-  if (cleanLine.includes("LAB WILL BE HELD IN ")) {
+  if (line.includes("LAB WILL BE HELD IN ")) {
     const comment = line.replace("**", "").trim()
     let commentSections = comment.split(" ")
 
