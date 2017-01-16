@@ -118,7 +118,8 @@ const parseLines = lines => {
         setupCourse(currentSection, currentSectionInfo, parsedLine);
         addInterval(currentSection, parsedLine);
         break;
-      case (lineType.INTERVAL_GENERAL || lineType.INTERVAL_LAB):
+      case (lineType.INTERVAL_LAB):
+      case (lineType.INTERVAL_GENERAL):
         addInterval(currentSection, parsedLine);
         break;
       case lineType.INTERVAL_COMMENT:
