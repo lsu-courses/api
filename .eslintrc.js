@@ -7,7 +7,8 @@ module.exports = {
     "extends": "eslint:recommended",
     "rules": {
         "eqeqeq": "error",
-        "curly": "multi",
+        "comma-dangle": ["error", "always-multiline"],
+        "curly": ["error", "multi"],
         "no-unexpected-multiline": "error",
         "no-case-declarations": "warn",
         "no-console": [

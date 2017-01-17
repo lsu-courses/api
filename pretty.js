@@ -1,7 +1,7 @@
 const pretty = require("prettyjson")
 
 const options = {
-  keysColor: "green"
+  keysColor: "green",
 }
 
 module.exports = function(json) {

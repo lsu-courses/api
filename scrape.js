@@ -1,13 +1,13 @@
 const request = require("request-promise")
 const cheerio = require("cheerio")
-const pretty = require("./pretty")
+//const pretty = require("./pretty")
 const Promise = require("bluebird")
 
 const config = department =>
   ({
     method: "post",
     uri: "http://appl101.lsu.edu/booklet2.nsf/68a84f901daef98386257b43006b778a?CreateDocument",
-    body: `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Spring+2017&%25%25Surrogate_Department=1&Department=${department}`
+    body: `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Spring+2017&%25%25Surrogate_Department=1&Department=${department}`,
   })
 
 const scrape = (departments) => {
@@ -29,10 +29,7 @@ const handleRequestResponse = (body) => {
   let $ = cheerio.load(body)
   let pre = $("pre").html()
 
-  if (!pre) {
-    //console.warn("Warning: Error on empty pre, most likely no courses in department")
-    return
-  }
+  if (!pre) return
 
   let lines = pre.split("\n").filter(str => str.trim().length > 0)
   return parseLines(lines)
@@ -63,9 +60,8 @@ const parseLines = lines => {
     // If enrollmentAvailable is not empty, it is either a number or "(F)", indicating
     // that a new section has begun.
     if (enrollmentAvailable !== "") {
-      if (currentSection) {
+      if (currentSection)
         sections.push(currentSection)
-      }
 
       currentSection = { course: { comments: currentSectionInfo.comments } }
     }
@@ -77,40 +73,34 @@ const parseLines = lines => {
 
     // Section Comment: A section-wide comment applying to all time intervals (Can have multiple)
     // Ex. '      ***   CSC  7080  ***       CROSS-LISTED WITH   EE 7720'
-    if (lineTrim.startsWith("***")) {
+    if (lineTrim.startsWith("***"))
       currentLineType = lineType.SECTION_COMMENT
-    }
 
     // Interval First: The start of a generalized interval. Things such as per-interval comments,
     // additional professors, or additional time intervals could follow.
     // Ex.  '  1    33  CSC  1351         1  COMP SCI II-MJRS       4.0   900-1020    T TH  0221 TUREAUD HALL                     BRANDT S'
-    else if (enrollmentAvailable !== "") {
+    else if (enrollmentAvailable !== "")
       currentLineType = lineType.INTERVAL_FIRST
-    }
 
     // Extra Teacher: Indicates an extra teacher is being added to the most recently added time interval
-    else if (line.slice(0, 116).trim() === "") {
+    else if (line.slice(0, 116).trim() === "")
       currentLineType = lineType.INTERVAL_EXTRA_TEACHER
-    }
 
     // Interval Comment: Indicates the start of an interval comment, not a section-wide comment. This comment
     // is to be added specifically to the most recently added interval.
-    else if (lineTrim.startsWith("**") && !lineTrim.startsWith("***")) {
+    else if (lineTrim.startsWith("**") && !lineTrim.startsWith("***"))
       currentLineType = lineType.INTERVAL_COMMENT
-    }
 
     // Lab Interval: Indicates the start of an interval with type lab.
     // Ex. '                     LAB                                     500-0750N     TH                                        BRANDT S',
-    else if (lineTrim.startsWith("LAB")) {
+    else if (lineTrim.startsWith("LAB"))
       currentLineType = lineType.INTERVAL_LAB
-    }
 
     // General Additional Interval: This indicates the start of an additional time interval for this section. Some
     // sections have different times or buildings on certain days, therefore there can be multiple time intervals.
     // Ex. '                                                        1130-1220    T     0138 LOCKETT'
-    else if (line.slice(0, 57).trim() === "" && line.includes("-")) {
+    else if (line.slice(0, 57).trim() === "" && line.includes("-"))
       currentLineType = lineType.INTERVAL_GENERAL
-    }
 
     // PROCESS LINES:
     // Process the information of the current line contextually based on the
@@ -142,8 +132,6 @@ const parseLines = lines => {
         break
     }
   }
-
-  //console.log("returning sections")
 
   return sections
 }
@@ -188,7 +176,7 @@ const addInterval = (currentSection, parsedLine) => {
     number: parsedLine.section.number,
     title: parsedLine.section.title,
     location: parsedLine.section.location,
-    time: parsedLine.section.time
+    time: parsedLine.section.time,
   })
 }
 
@@ -221,10 +209,10 @@ const parseIntervalLine = line => {
   let isNight = timeInterval.includes("N")
   const dayArray = []
 
-  if (days.includes("H")) {
+  if (days.includes("H"))
     if (days.split("T").length - 1 === 2) Array.prototype.push.apply(dayArray, [ "TUESDAY", "THURSDAY" ])
     else dayArray.push("THURSDAY")
-  } else {
+  else {
     if (days.includes("M"))     dayArray.push("MONDAY")
     if (days.charAt(1) === "T") dayArray.push("TUESDAY")
     if (days.includes("W"))     dayArray.push("WEDNESDAY")
@@ -248,7 +236,7 @@ const parseIntervalLine = line => {
       total: enrollmentFull
         ? enrollmentCount
         : enrollmentCount + enrollmentAvailable,
-      isFull: enrollmentFull
+      isFull: enrollmentFull,
     },
     course: {
       abbreviation: courseAbbreviation,
@@ -258,7 +246,7 @@ const parseIntervalLine = line => {
         text: specialEnrollment,
         isComIntensive,
         isWebBased,
-      }
+      },
     },
     section: {
       type: sectionType,
@@ -272,9 +260,9 @@ const parseIntervalLine = line => {
         end: endTime,
         hasTime,
         isNight,
-        days: dayArray
-      }
-    }
+        days: dayArray,
+      },
+    },
   }
 }
 
