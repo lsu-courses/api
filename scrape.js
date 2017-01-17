@@ -1,44 +1,53 @@
-const request = require("request")
+const request = require("request-promise")
 const cheerio = require("cheerio")
 const pretty = require("./pretty")
+const Promise = require("bluebird")
 
 const config = department =>
   ({
     method: "post",
-    url: "http://appl101.lsu.edu/booklet2.nsf/68a84f901daef98386257b43006b778a?CreateDocument",
+    uri: "http://appl101.lsu.edu/booklet2.nsf/68a84f901daef98386257b43006b778a?CreateDocument",
     body: `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Spring+2017&%25%25Surrogate_Department=1&Department=${department}`
   })
 
-const departments = [ "COMPUTER SCIENCE" ]
+const scrape = (departments) => {
 
-const scrape = () => {
-  departments.forEach(department => request(config(department), onResponse))
+  const departmentRequest = department =>
+    request(config(department))
+      .then(body => handleRequestResponse(body))
+
+  return Promise.map(
+    departments,
+    department => departmentRequest(department),
+    { concurrency: Infinity }
+  )
+
 }
 
-const onResponse = (error, response, body) => {
-  if (error) {
-    console.log("Error: " + error)
+const handleRequestResponse = (body) => {
+
+  let $ = cheerio.load(body)
+  let pre = $("pre").html()
+
+  if (!pre) {
+    //console.warn("Warning: Error on empty pre, most likely no courses in department")
     return
   }
 
-  let $ = cheerio.load(body)
-  let pre = $("pre")
+  let lines = pre.split("\n").filter(str => str.trim().length > 0)
+  return parseLines(lines)
+}
 
-  let lines = $(pre).html().split("\n").filter(str => str.trim().length > 0)
-  let courses = parseLines(lines)
-
-  console.log(lines)
+const lineType = {
+  SECTION_COMMENT: Symbol(),
+  INTERVAL_FIRST: Symbol(),
+  INTERVAL_LAB: Symbol(),
+  INTERVAL_GENERAL: Symbol(),
+  INTERVAL_COMMENT: Symbol(),
+  INTERVAL_EXTRA_TEACHER: Symbol(),
 }
 
 const parseLines = lines => {
-  const lineType = {
-    SECTION_COMMENT: Symbol(),
-    INTERVAL_FIRST: Symbol(),
-    INTERVAL_LAB: Symbol(),
-    INTERVAL_GENERAL: Symbol(),
-    INTERVAL_COMMENT: Symbol(),
-    INTERVAL_EXTRA_TEACHER: Symbol(),
-  }
 
   let currentLineType
   let sections = []
@@ -134,7 +143,9 @@ const parseLines = lines => {
     }
   }
 
-  console.log(pretty(sections))
+  //console.log("returning sections")
+
+  return sections
 }
 
 // A functional reducer-like function that takes comments, and the current interval,
