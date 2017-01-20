@@ -1,16 +1,15 @@
+const Promise = require("bluebird")
 const request = require("request-promise")
 const cheerio = require("cheerio")
-//const pretty = require("./pretty")
-const Promise = require("bluebird")
+const pretty = require("../pretty")
 
-const config = department =>
-  ({
+const scrape = departments => {
+
+  const config = department => ({
     method: "post",
     uri: "http://appl101.lsu.edu/booklet2.nsf/68a84f901daef98386257b43006b778a?CreateDocument",
     body: `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Spring+2017&%25%25Surrogate_Department=1&Department=${department}`,
   })
-
-const scrape = (departments) => {
 
   const departmentRequest = department =>
     request(config(department))
@@ -24,8 +23,9 @@ const scrape = (departments) => {
 
 }
 
-const handleRequestResponse = (body) => {
+module.exports = scrape
 
+const handleRequestResponse = body => {
   let $ = cheerio.load(body)
   let pre = $("pre").html()
 
@@ -265,5 +265,3 @@ const parseIntervalLine = line => {
     },
   }
 }
-
-module.exports = scrape
