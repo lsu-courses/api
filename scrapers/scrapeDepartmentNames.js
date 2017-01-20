@@ -1,14 +1,12 @@
 const Promise = require("bluebird")
 const request = require("request-promise")
 const cheerio = require("cheerio")
-const pretty = require("../pretty")
 
 const scrape = () => {
 
   const config = () => ({
     method: "post",
-    uri: "http://appl101.lsu.edu/booklet2.nsf/Selector2?OpenForm",
-    //body: "/BOOKLET2.nsf/Selector2?OpenForm"
+    uri: "http://appl101.lsu.edu/booklet2.nsf/Selector2?OpenForm"
   })
   
   return request(config())

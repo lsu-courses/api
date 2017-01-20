@@ -1,7 +1,6 @@
 const Promise = require("bluebird")
 const request = require("request-promise")
 const cheerio = require("cheerio")
-const pretty = require("../pretty")
 
 const scrape = departments => {
 

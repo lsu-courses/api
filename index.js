@@ -1,8 +1,5 @@
 const express = require('express')
-const pretty = require("./pretty")
 const scrape = require("./scrapers")
-
-const departments = require("./departments")
 
 console.time("Time")
 
