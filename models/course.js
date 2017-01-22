@@ -1,8 +1,9 @@
 const bookshelf = require("../bookshelf")
+const ModelBase = require("bookshelf-modelbase")(bookshelf)
 require("./semester")
 require("./section")
 
-const Course = bookshelf.Model.extend({
+const Course = ModelBase.extend({
   tableName: "courses",
   uuid: true,
   semester: function() {

@@ -8,7 +8,7 @@ console.time("Time")
 app.set("bookshelf", bookshelf)
 
 scrape()
-  .then(function(re) {
-    console.log(`Got ${re.length} departments`)
-    console.timeEnd("Time")
-  })
+  // .then(function(re) {
+  //   console.log(`Got ${re.length} departments`)
+  //   console.timeEnd("Time")
+  // })
