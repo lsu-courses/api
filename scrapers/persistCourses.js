@@ -6,17 +6,11 @@ const persist = departments => {
   departments.forEach(sections => {
 
     let courseBuffer = []
-    let currentCourseID
     let courseCreatePromises = []
 
     sections.forEach(section => {
 
-      const {
-        course: { abbreviation, number, hours, special, comments },
-        section: {
-          enrollment: { available, current, total, isFull }, intervals,
-        },
-      } = section
+      const { course: { abbreviation, number, hours } } = section
 
       if (!courseBuffer.includes(number)) {
 
@@ -29,49 +23,89 @@ const persist = departments => {
         courseBuffer.push(number)
       }
 
-      // console.log(`Creating section for ${intervals[0].title}`)
-
-      // Section.create({ number, title: intervals[0].title, course_id: currentCourseID })
-
     })
 
     Promise
+
+      // 1. Create all courses for this department
       .all(courseCreatePromises)
+
+      // 2. Map to attributes. Creating courses returns an array of their final
+      // models. The models contaian a attributes object that contains their "ID"
+      // in the database. We map the array such that it is now an array of those
+      // attribute objects.
       .then(data => data.map(object => object.attributes))
+
+      // 3. Create promises that create sections. Each course can have one or more
+      // sections. In the database, sections have the course ID of their parent.
+      // To find which parent ID goes with the section currently being processed,
+      // we search the array of course attributes to find the course attribute
+      // object that has the same abbreviation and number. We then use this course
+      // attribute object's ID when creating the child section.
       .then(courses => {
 
         let createSectionPromises = []
 
         sections.forEach(section => {
 
+          // 3.1 Search for matching course, extract its ID
           const { id } = courses.find(
             course =>
               course.abbreviation === section.course.abbreviation &&
               course.number === section.course.number
           )
 
+          // 3.2 Create promies that create sections with the matching ID
           createSectionPromises.push(new Promise(
             (resolve, reject) => {
-              console.log("Creating section for " + id)
 
-              console.log(JSON.stringify(section, null, 2))
+              Section
+                .create({
+                  number: section.course.number,
+                  title: section.section.intervals[0].title,
+                  course_id: id,
+                })
 
-              resolve(Section.create({
-                number: section.course.number,
-                title: section.section.intervals[0].title,
-                course_id: id,
-              }))
+                // 3.2.1 The create method returns an object that contains the newly
+                // created section's ID in the database. We then attach this database
+                // ID to the full section object (which contains things like an array
+                // of time intervals) and then we resolve this section creation promise
+                // with the full section object, which now has the section database ID.
+                // We will later use this ID to make relations to time intervals in the DB.
+                .then(object => {
+                  section.section_id = object.attributes.id
+                  resolve(section)
+                })
 
             }
           ))
 
         })
 
+        // 3.3 Return the array of promises
         return createSectionPromises
       })
-      .then(sectionPromises =>
-        Promise.all(sectionPromises)
-      ).catch(err => {
+
+      // 4. Create all sections
+      .then(sectionPromises => Promise.all(sectionPromises))
+
+      .then(sections => {
+
+        let createTimeIntervalPromises = []
+
+        sections.forEach(section => {
+
+          const { section_id, section: { intervals } } = section
+
+          console.log(`Processing intervals found in ${section_id}`)
+
+          intervals.forEach(interval => console.log(interval))
+
+        })
+
+        return createTimeIntervalPromises
+      })
+      .catch(err => {
         console.error(err)
       })
 
