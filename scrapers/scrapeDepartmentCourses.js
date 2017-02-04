@@ -168,7 +168,7 @@ const setupCourse = (currentSection, currentSectionInfo, parsedLine) => {
 
 const addInterval = (currentSection, parsedLine) => {
   currentSection.section.intervals.push({
-    teachers: [ parsedLine.section.teacher ],
+    teachers: parsedLine.section.teachers,
     comments: [],
     type: parsedLine.section.type,
     isLab: parsedLine.section.isLab,
@@ -252,7 +252,7 @@ const parseIntervalLine = line => {
       isLab: isLab,
       number: sectionNumber,
       title: sectionTitle,
-      instructor: instructorName,
+      teachers: [ instructorName ],
       location: { building: buildingName, room: roomNumber },
       time: {
         start: startTime,

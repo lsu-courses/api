@@ -1,5 +1,7 @@
 const Course = require("../models/course")
 const Section = require("../models/section")
+const TimeInterval = require("../models/time-interval")
+const pretty = require("../utils/pretty")
 
 const persist = departments => {
 
@@ -98,12 +100,43 @@ const persist = departments => {
           const { section_id, section: { intervals } } = section
 
           console.log(`Processing intervals found in ${section_id}`)
+          console.log(`There are ${intervals.length} intervals`)
 
-          intervals.forEach(interval => console.log(interval))
+          intervals.forEach(interval => {
+
+            createTimeIntervalPromises.push(new Promise(
+              (resolve, reject) => {
+
+                console.log("inside interval promise\n\n")
+
+                TimeInterval
+                  .create({
+                    start: interval.time.start,
+                    end: interval.time.end,
+                    hasTime: interval.time.hasTime,
+                    isNight: interval.time.isNight,
+                    section_id: section_id,
+                  })
+                  .then(object => {
+                    interval.interval_id = object.id
+                    console.log("\ninterval being resolved")
+                    console.log(interval)
+                    resolve(interval)
+                  })
+
+              }
+            ))
+
+          })
 
         })
 
         return createTimeIntervalPromises
+      })
+      .then(intervalPromises => Promise.all(intervalPromises))
+      .then(intervals => {
+        console.log("\n\nFINAL INTERVALS AFTER CREATION")
+        console.log(JSON.stringify(intervals, null, 2))
       })
       .catch(err => {
         console.error(err)
