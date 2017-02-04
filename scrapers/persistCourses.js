@@ -1,6 +1,7 @@
 const Course = require("../models/course")
 const Section = require("../models/section")
 const TimeInterval = require("../models/time-interval")
+const Instructor = require("../models/instructor")
 const pretty = require("../utils/pretty")
 
 const persist = departments => {
@@ -157,8 +158,70 @@ const persist = departments => {
           if (!unique_teachers.includes(t)) unique_teachers.push(t)
         })
 
+        let createTeacherPromises = []
+
+        unique_teachers.forEach(teacher => {
+          createTeacherPromises.push(new Promise(
+            (resolve, reject) => {
+              Instructor
+                .create({ name: teacher })
+                .then(object =>  resolve({ name: teacher, id: object.id }))
+            }
+          ))
+        })
+
+        // This comment can be refactored out later. It was just me typing
+        // thoughts as fast as possible after I had this idea.
+
+        // Assign the promise.all to a variable, pass that into all the
+        // merge-table creation promises, then the merge table creation promises
+        // use then on this variable and only perform an action once this has
+        // compelted. This lets every merge table creation promise have access
+        // to the values. This works because of closures.
+        let uniqueTeacherIds = Promise.all(createTeacherPromises)
+
+        let createTeacherIntervalPromises = []
+
+        intervals.forEach(interval => {
+          createTeacherIntervalPromises.push(new Promise(
+            (resolve, reject) => {
+              uniqueTeacherIds
+                .then(teachers => {
+
+                  let matched_teachers =
+                    interval.teachers
+                      .map(name => teachers.find(i => i.name === name))
+
+                  console.log("\n\nTEACHERS")
+                  console.log(interval.teachers)
+
+                  console.log("\nMATCHED TEACHERS:")
+                  console.log(matched_teachers)
+
+                  // create an entry in the interval-intrsuctor merge
+                  // table here for every interval and for every teacher.
+                  // A single entry is created for each sub teacher for each
+                  // interval. These may not have to be created in promises
+                  // since we are never really going to use their return value.
+
+                  matched_teachers.forEach(teacher => {
+                    // What exactly is the model for a merge table?
+                    // And how exactly does a merge table even work?
+                    // I think I've got to watch some SQL videos
+                    // Tomorrow. It is 4:15 AM
+                  })
+
+                })
+            }
+          ))
+        })
+
         console.log(unique_teachers)
+
+        return createTeacherIntervalPromises
       })
+      .then(promises => Promise.all(promises))
+      .then(teachers => console.log(teachers))
       .catch(err => {
         console.error(err)
       })
