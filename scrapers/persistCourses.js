@@ -135,8 +135,29 @@ const persist = departments => {
       })
       .then(intervalPromises => Promise.all(intervalPromises))
       .then(intervals => {
+
+        // create map of teacher to id
+        // save all disctinct teachers to the database
+        // and then return a map of their name to their ID
+        // in the saved database. Then feed that map into the next
+        // thing (creation of instructor courses where that can read
+        // the map)
+
         console.log("\n\nFINAL INTERVALS AFTER CREATION")
         console.log(JSON.stringify(intervals, null, 2))
+
+        let teachers =
+          intervals
+            .map(interval => interval.teachers)
+            .reduce((p, c) => [ ...p, ...c ])
+
+        let unique_teachers = []
+
+        teachers.forEach(t => {
+          if (!unique_teachers.includes(t)) unique_teachers.push(t)
+        })
+
+        console.log(unique_teachers)
       })
       .catch(err => {
         console.error(err)

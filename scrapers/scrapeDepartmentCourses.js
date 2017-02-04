@@ -226,7 +226,7 @@ const parseIntervalLine = line => {
   const isWebBased = specialEnrollment.includes("WEB BASE")
   const isComIntensive = specialEnrollment.includes("CI-WRITTEN&SPOK")
 
-  const instructorName = line.slice(117, line.length - 1)
+  const instructorName = line.slice(117, line.length)
 
   return {
     enrollment: {
