@@ -186,9 +186,9 @@ const addInterval = (currentSection, parsedLine) => {
 // 53    47  CHE  2171         2  CHE FUND MAT EN BAL    3.0   930-1020   M W F  0204 TUREAUD HALL                     BENTON M
 //(F)     7  CHE  3104         1  ENGR MEASUREMENT LAB   3.0  1230-0120   M W    1221 PATRICK TAYLOR  CI-WRITTEN&SPOK  MELVIN E
 const parseIntervalLine = line => {
-  const enrollmentAvailable = Number(line.slice(0, 4).trim())
-  const enrollmentCount = Number(line.slice(4, 10).trim())
-  const enrollmentFull = enrollmentAvailable === "(F)"
+  let enrollmentAvailable = Number(line.slice(0, 4).trim())
+  let enrollmentCount = Number(line.slice(4, 10).trim())
+  let enrollmentFull = line.slice(0, 4).trim() === "(F)"
 
   const courseAbbreviation = line.slice(10, 16).trim()
   const courseNumber = line.slice(16, 21).trim()
@@ -228,14 +228,22 @@ const parseIntervalLine = line => {
 
   const instructorName = line.slice(117, line.length)
 
+  // Fix fields
+
+  if (Number.isNaN(enrollmentAvailable)) enrollmentAvailable = 0
+
+  console.log(enrollmentFull)
+
+  // Return final object
+
   return {
     enrollment: {
-      available: enrollmentFull ? 0 : enrollmentAvailable,
+      available: enrollmentAvailable,
       current: enrollmentCount,
       total: enrollmentFull
         ? enrollmentCount
         : enrollmentCount + enrollmentAvailable,
-      isFull: enrollmentFull,
+      is_full: enrollmentFull,
     },
     course: {
       abbreviation: courseAbbreviation,

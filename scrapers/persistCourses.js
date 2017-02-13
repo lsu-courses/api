@@ -2,6 +2,7 @@ const Course = require("../models/course")
 const Section = require("../models/section")
 const TimeInterval = require("../models/time-interval")
 const Instructor = require("../models/instructor")
+const InstructorsIntervals = require("../models/instructors-intervals")
 const pretty = require("../utils/pretty")
 
 const persist = departments => {
@@ -13,13 +14,28 @@ const persist = departments => {
 
     sections.forEach(section => {
 
-      const { course: { abbreviation, number, hours } } = section
+      const {
+        course: {
+          abbreviation,
+          number,
+          hours,
+          comments,
+          special,
+        },
+      } = section
 
       if (!courseBuffer.includes(number)) {
 
         courseCreatePromises.push(new Promise(
           (resolve, reject) => {
-            resolve(Course.create({ abbreviation, number, hours }))
+            resolve(
+              Course.create({
+                abbreviation,
+                number,
+                hours,
+                comments: comments,
+              })
+            )
           }
         ))
 
@@ -51,6 +67,13 @@ const persist = departments => {
 
         sections.forEach(section => {
 
+          const {
+            available,
+            current,
+            is_full,
+            total,
+          } = section.section.enrollment
+
           // 3.1 Search for matching course, extract its ID
           const { id } = courses.find(
             course =>
@@ -64,9 +87,13 @@ const persist = departments => {
 
               Section
                 .create({
+                  course_id: id,
                   number: section.course.number,
                   title: section.section.intervals[0].title,
-                  course_id: id,
+                  enrollment_available: available,
+                  enrollment_current: current,
+                  enrollment_is_full: is_full,
+                  enrollment_total: total,
                 })
 
                 // 3.2.1 The create method returns an object that contains the newly
@@ -209,6 +236,12 @@ const persist = departments => {
                     // And how exactly does a merge table even work?
                     // I think I've got to watch some SQL videos
                     // Tomorrow. It is 4:15 AM
+
+                    InstructorsIntervals
+                      .create({
+                        instructor_id: teacher.id,
+                        interval_id: interval.interval_id,
+                      })
                   })
 
                 })
