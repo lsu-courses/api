@@ -78,18 +78,6 @@ exports.up = (knex, Promise) => {
       table.timestamps()
     }),
 
-    knex.schema.createTable("buildings", table => {
-      table.uuid("id").primary()
-
-      table.string("name")
-
-      table.timestamps()
-    }),
-
-    knex.schema.createTable("sections_buildings", table => {
-      table.uuid("section_id").references("sections.id")
-      table.uuid("building_id").references("buildings.id")
-    }),
   ])
 }
 
