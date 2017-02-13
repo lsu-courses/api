@@ -67,9 +67,11 @@ exports.up = (knex, Promise) => {
 
       table.string("start")
       table.string("end")
-      table.boolean("hasTime")
-      table.boolean("isNight")
-      table.string("days")
+      table.boolean("has_time")
+      table.boolean("special_is_night")
+      table.specificType("days", "text[]")
+      table.string("location_building")
+      table.string("location_room")
 
       table.uuid("section_id").references("sections.id")
 
