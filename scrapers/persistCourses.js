@@ -137,12 +137,19 @@ const persist = departments => {
 
                 console.log("inside interval promise\n\n")
 
+                // "Special" information on a time interval
+                // are things that are determined and help
+                // provide context.
+
                 TimeInterval
                   .create({
                     start: interval.time.start,
                     end: interval.time.end,
-                    hasTime: interval.time.hasTime,
-                    isNight: interval.time.isNight,
+                    has_time: interval.time.hasTime,
+                    special_is_night: interval.time.isNight,
+                    location_building: interval.location.building,
+                    location_room: interval.location.room,
+                    days: interval.time.days,
                     section_id: section_id,
                   })
                   .then(object => {
