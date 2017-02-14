@@ -150,6 +150,8 @@ const persist = departments => {
                     location_building: interval.location.building,
                     location_room: interval.location.room,
                     days: interval.time.days,
+                    comments: interval.comments,
+                    is_lab: interval.isLab,
                     section_id: section_id,
                   })
                   .then(object => {
@@ -247,7 +249,7 @@ const persist = departments => {
                     InstructorsIntervals
                       .create({
                         instructor_id: teacher.id,
-                        interval_id: interval.interval_id,
+                        time_interval_id: interval.interval_id,
                       })
                   })
 
