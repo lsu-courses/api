@@ -72,6 +72,9 @@ const parseLines = lines => {
 
     // Section Comment: A section-wide comment applying to all time intervals (Can have multiple)
     // Ex. '      ***   CSC  7080  ***       CROSS-LISTED WITH   EE 7720'
+
+    // Note. Upon furhter research, section comments actually apply to
+    // all instances (sections) of a course.
     if (lineTrim.startsWith("***"))
       currentLineType = lineType.SECTION_COMMENT
 
@@ -148,6 +151,10 @@ const processComment = (currentSection, line) => {
 
     interval.location.building = commentSections[6]
     interval.location.room = commentSections[5]
+
+    if (interval.location.building === "PFT") 
+      interval.location.building = "PATRICK TAYLOR"
+    
     return
   }
 

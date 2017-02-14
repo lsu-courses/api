@@ -53,11 +53,11 @@ exports.up = (knex, Promise) => {
       table.timestamps()
     }),
 
-    knex.schema.createTable("instructors_intervals", table => {
+    knex.schema.createTable("instructors_time_intervals", table => {
       table.uuid("id").primary()
 
       table.uuid("instructor_id").references("instructors.id")
-      table.uuid("interval_id").references("time_intervals.id")
+      table.uuid("time_interval_id").references("time_intervals.id")
       
       table.timestamps()
     }),
@@ -70,8 +70,10 @@ exports.up = (knex, Promise) => {
       table.boolean("has_time")
       table.boolean("special_is_night")
       table.specificType("days", "text[]")
+      table.specificType("comments", "text[]")
       table.string("location_building")
       table.string("location_room")
+      table.boolean("is_lab")
 
       table.uuid("section_id").references("sections.id")
 
@@ -89,7 +91,5 @@ exports.down = (knex, Promise) => {
     knex.raw("DROP TABLE sections CASCADE"),
     knex.raw("DROP TABLE instructors_intervals CASCADE"),
     knex.raw("DROP TABLE time_intervals CASCADE"),
-    knex.raw("DROP TABLE buildings CASCADE"),
-    knex.raw("DROP TABLE sections_buildings CASCADE"),
   ])
 }

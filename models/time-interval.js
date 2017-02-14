@@ -7,6 +7,9 @@ const TimeInterval = bookshelf.Model.extend({
   section: function() {
     return this.belongsTo("Section")
   },
+  instructor: function() {
+    return this.belongsToMany("Instructor")
+  }
 })
 
 module.exports = bookshelf.model("TimeInterval", TimeInterval)

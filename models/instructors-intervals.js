@@ -2,7 +2,7 @@ const bookshelf = require("../bookshelf")
 require("./instructor")
 
 const InstructorsIntervals = bookshelf.Model.extend({
-  tableName: "instructors_intervals",
+  tableName: "instructors_time_intervals",
   uuid: true,
 })
 
