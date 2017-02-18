@@ -68,7 +68,6 @@ exports.up = (knex, Promise) => {
       table.string("start")
       table.string("end")
       table.boolean("has_time")
-      table.boolean("special_is_night")
       table.specificType("days", "text[]")
       table.specificType("comments", "text[]")
       table.string("location_building")
@@ -76,6 +75,24 @@ exports.up = (knex, Promise) => {
       table.boolean("is_lab")
 
       table.uuid("section_id").references("sections.id")
+
+      table.boolean("special_is_night")
+      table.boolean("special_is_all_web")
+      table.boolean("special_is_most_web")
+      table.boolean("special_is_half_web")
+      table.boolean("special_is_some_web")
+
+      table.boolean("special_requires_dept_perm")
+      table.boolean("special_requires_inst_perm")
+
+      table.boolean("special_is_majors_only")
+      table.boolean("special_is_cmi")
+      table.boolean("special_is_cmi_written")
+      table.boolean("special_is_cmi_spoken")
+      table.boolean("special_is_cmi_tech")
+      table.boolean("special_is_cmi_visual")
+
+      table.boolean("special_is_svc")
 
       table.timestamps()
     }),
@@ -89,7 +106,7 @@ exports.down = (knex, Promise) => {
     knex.raw("DROP TABLE courses CASCADE"),
     knex.raw("DROP TABLE instructors CASCADE"),
     knex.raw("DROP TABLE sections CASCADE"),
-    knex.raw("DROP TABLE instructors_intervals CASCADE"),
+    knex.raw("DROP TABLE instructors_time_intervals CASCADE"),
     knex.raw("DROP TABLE time_intervals CASCADE"),
   ])
 }

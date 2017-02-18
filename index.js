@@ -20,9 +20,15 @@ const Course = require("./models/course")
 
 app.get("/", (request, response) => {
 
+  let section_columns = [
+    "id", "abbreviation", "number", "hours"
+  ]
+
+  console.log("here")
+
   Course
     //.collection()
-    .where("number", "1350")
+    .where("number", "1252")
     .fetch({
 
       withRelated: [
