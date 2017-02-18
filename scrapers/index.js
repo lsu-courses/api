@@ -7,7 +7,7 @@ const persistCourses = require("./persistCourses")
 //     .then(scrapeDepartmentCourses)
 
 const run = () =>
-  scrapeDepartmentCourses(["COMPUTER SCIENCE"])
+  scrapeDepartmentCourses(["BIOLOGICAL ENGINEERING"])
     .then(persistCourses)
 
 module.exports = run  

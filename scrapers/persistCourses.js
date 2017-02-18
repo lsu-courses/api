@@ -88,7 +88,7 @@ const persist = departments => {
               Section
                 .create({
                   course_id: id,
-                  number: section.course.number,
+                  number: section.section.intervals[0].number,
                   title: section.section.intervals[0].title,
                   enrollment_available: available,
                   enrollment_current: current,
@@ -141,18 +141,38 @@ const persist = departments => {
                 // are things that are determined and help
                 // provide context.
 
+                const special = interval.special.info
+
                 TimeInterval
                   .create({
                     start: interval.time.start,
                     end: interval.time.end,
                     has_time: interval.time.hasTime,
-                    special_is_night: interval.time.isNight,
                     location_building: interval.location.building,
                     location_room: interval.location.room,
                     days: interval.time.days,
                     comments: interval.comments,
                     is_lab: interval.isLab,
                     section_id: section_id,
+                    special_is_night: interval.time.isNight,
+
+                    special_is_all_web: special.isAllWeb,
+                    special_is_most_web: special.isMostWeb,
+                    special_is_half_web: special.isHalfWeb,
+                    special_is_some_web: special.isSomeWeb,
+
+                    special_requires_dept_perm: special.requiresDeptPerm,
+                    special_requires_inst_perm: special.requiresInstPerm,
+
+                    special_is_majors_only: special.isMajorsOnly,
+
+                    special_is_cmi: special.communicationIntensive.isIntensive,
+                    special_is_cmi_written: special.communicationIntensive.type.written,
+                    special_is_cmi_spoken: special.communicationIntensive.type.spoken,
+                    special_is_cmi_tech: special.communicationIntensive.type.tech,
+                    special_is_cmi_visual: special.communicationIntensive.type.visual,
+
+                    special_is_svc: special.isServiceLearning,
                   })
                   .then(object => {
                     interval.interval_id = object.id
@@ -181,7 +201,7 @@ const persist = departments => {
         // the map)
 
         console.log("\n\nFINAL INTERVALS AFTER CREATION")
-        console.log(JSON.stringify(intervals, null, 2))
+        //console.log(JSON.stringify(intervals, null, 2))
 
         let teachers =
           intervals
@@ -228,11 +248,11 @@ const persist = departments => {
                     interval.teachers
                       .map(name => teachers.find(i => i.name === name))
 
-                  console.log("\n\nTEACHERS")
-                  console.log(interval.teachers)
+                  //console.log("\n\nTEACHERS")
+                  //console.log(interval.teachers)
 
-                  console.log("\nMATCHED TEACHERS:")
-                  console.log(matched_teachers)
+                  //console.log("\nMATCHED TEACHERS:")
+                  //console.log(matched_teachers)
 
                   // create an entry in the interval-intrsuctor merge
                   // table here for every interval and for every teacher.
