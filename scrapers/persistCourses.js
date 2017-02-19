@@ -21,6 +21,8 @@ const persist = departments => {
           hours,
           comments,
           special,
+          full_title,
+          description,
         },
       } = section
 
@@ -33,6 +35,8 @@ const persist = departments => {
                 abbreviation,
                 number,
                 hours,
+                full_title,
+                description,
                 comments: comments,
               })
             )

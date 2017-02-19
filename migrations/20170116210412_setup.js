@@ -16,6 +16,9 @@ exports.up = (knex, Promise) => {
       table.string("number")
       table.string("hours")
 
+      table.string("full_title")
+      table.text("description")
+
       table.unique(["abbreviation", "number"])
 
       table.string("specialEnrollment")
