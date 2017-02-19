@@ -7,7 +7,7 @@ console.time("Time")
 
 app.set("bookshelf", bookshelf)
 
-//scrape()
+scrape()
 
     // .then(function(re) {
   //   console.log(`Got ${re.length} departments`)
