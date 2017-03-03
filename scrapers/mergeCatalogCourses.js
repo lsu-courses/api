@@ -5,6 +5,8 @@ const merge = object => {
 
   console.log(object)
 
+  console.log("AFTER OBJECT")
+
   let sections = object.sections
   let departments = object[0].departments
 
@@ -14,6 +16,7 @@ const merge = object => {
 
   object.forEach(obj => {
     obj.sections.forEach(course => {
+      console.log(course)
       courses.push(course)
     })
   })
@@ -37,6 +40,13 @@ const merge = object => {
       //console.log(course.course)
 
       let foundSection = courses.find(sec => abbreviation === sec.abbr && number === sec.number)
+
+      //if (!foundSection) return
+
+      if (foundSection === undefined) {
+        newDept.push(newCourse)
+        return
+      }
       
       newCourse.course.full_title = foundSection.name
       newCourse.course.description = foundSection.parts.join(" ")
@@ -47,7 +57,10 @@ const merge = object => {
     newDepartments.push(newDept)
   })
 
-  //console.log(JSON.stringify(newDepartments, null, 2))
+  console.log("RETURNING NEW DEPARTMENTS")
+  console.log(newDepartments.length)
+
+  console.log(JSON.stringify(newDepartments, null, 2))
   return newDepartments
 }
 

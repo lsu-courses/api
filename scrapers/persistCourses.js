@@ -204,8 +204,8 @@ const persist = departments => {
         // thing (creation of instructor courses where that can read
         // the map)
 
-        console.log("\n\nFINAL INTERVALS AFTER CREATION")
-        //console.log(JSON.stringify(intervals, null, 2))
+        console.log("\n\n AFTER CREATION")
+        console.log(JSON.stringify(intervals, null, 2))
 
         let teachers =
           intervals
