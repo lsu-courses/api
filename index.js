@@ -1,47 +1,63 @@
-const express = require("express")
-const app = express()
-const bookshelf = require("./bookshelf")
-const scrape = require("./scrapers")
+const express = require("express");
+const app = express();
+const bookshelf = require("./bookshelf");
+const scrape = require("./scrapers");
+const bodyParser = require("body-parser");
+const cors = require("cors");
 
-console.time("Time")
+console.time("Time");
 
-app.set("bookshelf", bookshelf)
+app.set("bookshelf", bookshelf);
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+app.options("*", cors());
+
+app.listen(8080, () => console.log("listening"));
 
 scrape()
 
-    // .then(function(re) {
-  //   console.log(`Got ${re.length} departments`)
-  //   console.timeEnd("Time")
-  // })
+// .then(function(re) {
+//   console.log(`Got ${re.length} departments`)
+//   console.timeEnd("Time")
+// })
 
-const Section = require("./models/section")
-const TimeInterval = require("./models/time-interval")
-const Course = require("./models/course")
+const Section = require("./models/section");
+const TimeInterval = require("./models/time-interval");
+const Course = require("./models/course");
 
 app.get("/", (request, response) => {
+  let section_columns = ["id", "abbreviation", "number", "hours"];
 
-  let section_columns = [
-    "id", "abbreviation", "number", "hours"
-  ]
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  // response.setHeader(
+  //   "Access-Control-Allow-Methods",
+  //   "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+  // ); // If needed
+  // response.setHeader(
+  //   "Access-Control-Allow-Headers",
+  //   "X-Requested-With,contenttype,Content-Type,Accept"
+  // ); // If needed
+  // response.setHeader("Access-Control-Allow-Credentials", true); // If needed
 
-  console.log("here")
+  console.log(request.query);
+
+  console.log("here");
 
   Course
     //.collection()
-    .where("number", "1252")
+    .where("number", request.query.input || "1252")
     .fetch({
-
       withRelated: [
         "sections",
         "sections.timeIntervals",
-        "sections.timeIntervals.instructor",
-      ],
-
+        "sections.timeIntervals.instructor"
+      ]
     })
     .then(courses => {
-      response.json(courses)
-    })
-
+      response.json(courses);
+    });
   // TimeInterval
   //   .collection()
   //   .fetch({
@@ -51,7 +67,4 @@ app.get("/", (request, response) => {
   //     ],
   //   })
   //   .then(intervals => response.json({ intervals }))
-
-})
-
-app.listen(3000, () => console.log("listening"))
+});

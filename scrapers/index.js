@@ -10,7 +10,7 @@ const mergeCatalogCourses = require("./mergeCatalogCourses")
 //     .then(scrapeDepartmentCourses)
 
 const run = () =>
-  scrapeDepartmentCourses(["BIOLOGICAL ENGINEERING"])
+  scrapeDepartmentCourses(["COMPUTER SCIENCE", "MATHEMATICS"])
     .then(scrapeCatalogCourses)
     .then(mergeCatalogCourses)
     .then(persistCourses)

@@ -19,7 +19,7 @@ exports.up = (knex, Promise) => {
       table.string("full_title")
       table.text("description")
 
-      table.unique(["abbreviation", "number"])
+      //table.unique(["abbreviation", "number"])
 
       table.string("specialEnrollment")
       table.boolean("isComIntensive")

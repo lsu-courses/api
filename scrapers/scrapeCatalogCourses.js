@@ -6,7 +6,7 @@ const scrape = departments => {
 
   const config = number => ({
     method: "post",
-    uri: `http://catalog.lsu.edu/content.php?filter[27]=-1&filter[course_type]=-1&filter[keyword]=&filter[32]=1&filter[cpage]=${number}&cur_cat_oid=14&expand=1&navoid=1068&print=1&filter[exact_match]=1#acalog_template_course_filter`,
+    uri: `http://catalog.lsu.edu/content.php?filter[cpage]=${number}&cur_cat_oid=14&expand=1&navoid=1068&print=1`,
   })
 
   const pageRequest = department =>
@@ -65,6 +65,8 @@ const handleRequestResponse = (body, departments) => {
 
     })
   })
+
+  console.log(info_sections.length)
 
   return {
     sections: info_sections,
