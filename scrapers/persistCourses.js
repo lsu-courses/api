@@ -1,19 +1,16 @@
-const Course = require("../models/course")
-const Section = require("../models/section")
-const TimeInterval = require("../models/time-interval")
-const Instructor = require("../models/instructor")
-const InstructorsIntervals = require("../models/instructors-intervals")
-const pretty = require("../utils/pretty")
+const Course = require("../models/course");
+const Section = require("../models/section");
+const TimeInterval = require("../models/time-interval");
+const Instructor = require("../models/instructor");
+const InstructorsIntervals = require("../models/instructors-intervals");
+const pretty = require("../utils/pretty");
 
 const persist = departments => {
-
   departments.forEach(sections => {
-
-    let courseBuffer = []
-    let courseCreatePromises = []
+    let courseBuffer = [];
+    let courseCreatePromises = [];
 
     sections.forEach(section => {
-
       const {
         course: {
           abbreviation,
@@ -22,14 +19,13 @@ const persist = departments => {
           comments,
           special,
           full_title,
-          description,
-        },
-      } = section
+          description
+        }
+      } = section;
 
       if (!courseBuffer.includes(number)) {
-
-        courseCreatePromises.push(new Promise(
-          (resolve, reject) => {
+        courseCreatePromises.push(
+          new Promise((resolve, reject) => {
             resolve(
               Course.create({
                 abbreviation,
@@ -37,28 +33,22 @@ const persist = departments => {
                 hours,
                 full_title,
                 description,
-                comments: comments,
+                comments: comments
               })
-            )
-          }
-        ))
+            );
+          })
+        );
 
-        courseBuffer.push(number)
+        courseBuffer.push(number);
       }
+    });
 
-    })
-
-    Promise
-
-      // 1. Create all courses for this department
-      .all(courseCreatePromises)
-
+    Promise.all(courseCreatePromises) // 1. Create all courses for this department
       // 2. Map to attributes. Creating courses returns an array of their final
       // models. The models contaian a attributes object that contains their "ID"
       // in the database. We map the array such that it is now an array of those
       // attribute objects.
       .then(data => data.map(object => object.attributes))
-
       // 3. Create promises that create sections. Each course can have one or more
       // sections. In the database, sections have the course ID of their parent.
       // To find which parent ID goes with the section currently being processed,
@@ -66,137 +56,114 @@ const persist = departments => {
       // object that has the same abbreviation and number. We then use this course
       // attribute object's ID when creating the child section.
       .then(courses => {
-
-        let createSectionPromises = []
+        let createSectionPromises = [];
 
         sections.forEach(section => {
-
           const {
             available,
             current,
             is_full,
-            total,
-          } = section.section.enrollment
+            total
+          } = section.section.enrollment;
 
           // 3.1 Search for matching course, extract its ID
           const { id } = courses.find(
             course =>
               course.abbreviation === section.course.abbreviation &&
               course.number === section.course.number
-          )
+          );
 
           // 3.2 Create promies that create sections with the matching ID
-          createSectionPromises.push(new Promise(
-            (resolve, reject) => {
-
-              Section
-                .create({
-                  course_id: id,
-                  number: section.section.intervals[0].number,
-                  title: section.section.intervals[0].title,
-                  enrollment_available: available,
-                  enrollment_current: current,
-                  enrollment_is_full: is_full,
-                  enrollment_total: total,
-                })
-
-                // 3.2.1 The create method returns an object that contains the newly
-                // created section's ID in the database. We then attach this database
-                // ID to the full section object (which contains things like an array
-                // of time intervals) and then we resolve this section creation promise
-                // with the full section object, which now has the section database ID.
-                // We will later use this ID to make relations to time intervals in the DB.
-                .then(object => {
-                  section.section_id = object.attributes.id
-                  resolve(section)
-                })
-
-            }
-          ))
-
-        })
+          createSectionPromises.push(
+            new Promise((resolve, reject) => {
+              Section.create({
+                course_id: id,
+                number: section.section.intervals[0].number,
+                title: section.section.intervals[0].title,
+                enrollment_available: available,
+                enrollment_current: current,
+                enrollment_is_full: is_full,
+                enrollment_total: total
+              })// of time intervals) and then we resolve this section creation promise // ID to the full section object (which contains things like an array // created section's ID in the database. We then attach this database // 3.2.1 The create method returns an object that contains the newly
+              // with the full section object, which now has the section database ID.
+              // We will later use this ID to make relations to time intervals in the DB.
+              .then(object => {
+                section.section_id = object.attributes.id;
+                resolve(section);
+              });
+            })
+          );
+        });
 
         // 3.3 Return the array of promises
-        return createSectionPromises
+        return createSectionPromises;
       })
-
       // 4. Create all sections
       .then(sectionPromises => Promise.all(sectionPromises))
-
       .then(sections => {
-
-        let createTimeIntervalPromises = []
+        let createTimeIntervalPromises = [];
 
         sections.forEach(section => {
+          const { section_id, section: { intervals } } = section;
 
-          const { section_id, section: { intervals } } = section
-
-          console.log(`Processing intervals found in ${section_id}`)
-          console.log(`There are ${intervals.length} intervals`)
+          console.log(`Processing intervals found in ${section_id}`);
+          console.log(`There are ${intervals.length} intervals`);
 
           intervals.forEach(interval => {
-
-            createTimeIntervalPromises.push(new Promise(
-              (resolve, reject) => {
-
-                console.log("inside interval promise\n\n")
+            createTimeIntervalPromises.push(
+              new Promise((resolve, reject) => {
+                console.log("inside interval promise\n\n");
 
                 // "Special" information on a time interval
                 // are things that are determined and help
                 // provide context.
 
-                const special = interval.special.info
+                const special = interval.special.info;
 
-                TimeInterval
-                  .create({
-                    start: interval.time.start,
-                    end: interval.time.end,
-                    has_time: interval.time.hasTime,
-                    location_building: interval.location.building,
-                    location_room: interval.location.room,
-                    days: interval.time.days,
-                    comments: interval.comments,
-                    is_lab: interval.isLab,
-                    section_id: section_id,
-                    special_is_night: interval.time.isNight,
+                TimeInterval.create({
+                  start: interval.time.start,
+                  end: interval.time.end,
+                  has_time: interval.time.hasTime,
+                  location_building: interval.location.building,
+                  location_room: interval.location.room,
+                  days: interval.time.days,
+                  comments: interval.comments,
+                  is_lab: interval.isLab,
+                  section_id: section_id,
+                  s_night: interval.time.isNight,
 
-                    special_is_all_web: special.isAllWeb,
-                    special_is_most_web: special.isMostWeb,
-                    special_is_half_web: special.isHalfWeb,
-                    special_is_some_web: special.isSomeWeb,
+                  s_all_web: special.isAllWeb,
+                  s_most_web: special.isMostWeb,
+                  s_half_web: special.isHalfWeb,
+                  s_some_web: special.isSomeWeb,
 
-                    special_requires_dept_perm: special.requiresDeptPerm,
-                    special_requires_inst_perm: special.requiresInstPerm,
+                  s_req_dept_perm: special.requiresDeptPerm,
+                  s_req_inst_perm: special.requiresInstPerm,
 
-                    special_is_majors_only: special.isMajorsOnly,
+                  s_majors_only: special.isMajorsOnly,
 
-                    special_is_cmi: special.communicationIntensive.isIntensive,
-                    special_is_cmi_written: special.communicationIntensive.type.written,
-                    special_is_cmi_spoken: special.communicationIntensive.type.spoken,
-                    special_is_cmi_tech: special.communicationIntensive.type.tech,
-                    special_is_cmi_visual: special.communicationIntensive.type.visual,
+                  s_cmi: special.communicationIntensive.isIntensive,
+                  s_cmi_written: special.communicationIntensive.type.written,
+                  s_cmi_spoken: special.communicationIntensive.type.spoken,
+                  s_cmi_tech: special.communicationIntensive.type.tech,
+                  s_cmi_visual: special.communicationIntensive.type.visual,
 
-                    special_is_svc: special.isServiceLearning,
-                  })
-                  .then(object => {
-                    interval.interval_id = object.id
-                    console.log("\ninterval being resolved")
-                    console.log(interval)
-                    resolve(interval)
-                  })
+                  s_svc: special.isServiceLearning
+                }).then(object => {
+                  interval.interval_id = object.id;
+                  console.log("\ninterval being resolved");
+                  console.log(interval);
+                  resolve(interval);
+                });
+              })
+            );
+          });
+        });
 
-              }
-            ))
-
-          })
-
-        })
-
-        return createTimeIntervalPromises
+        return createTimeIntervalPromises;
       })
       .then(intervalPromises => Promise.all(intervalPromises))
       .then(intervals => {
-
         // create map of teacher to id
         // save all disctinct teachers to the database
         // and then return a map of their name to their ID
@@ -204,31 +171,31 @@ const persist = departments => {
         // thing (creation of instructor courses where that can read
         // the map)
 
-        console.log("\n\n AFTER CREATION")
-        console.log(JSON.stringify(intervals, null, 2))
+        if (intervals.length < 1) return;
 
-        let teachers =
-          intervals
-            .map(interval => interval.teachers)
-            .reduce((p, c) => [ ...p, ...c ])
+        console.log("\n\n AFTER CREATION");
+        console.log(JSON.stringify(intervals, null, 2));
 
-        let unique_teachers = []
+        let teachers = intervals
+          .map(interval => interval.teachers)
+          .reduce((p, c) => [...p, ...c]);
+
+        let unique_teachers = [];
 
         teachers.forEach(t => {
-          if (!unique_teachers.includes(t)) unique_teachers.push(t)
-        })
+          if (!unique_teachers.includes(t)) unique_teachers.push(t);
+        });
 
-        let createTeacherPromises = []
+        let createTeacherPromises = [];
 
         unique_teachers.forEach(teacher => {
-          createTeacherPromises.push(new Promise(
-            (resolve, reject) => {
-              Instructor
-                .create({ name: teacher })
-                .then(object =>  resolve({ name: teacher, id: object.id }))
-            }
-          ))
-        })
+          createTeacherPromises.push(
+            new Promise((resolve, reject) => {
+              Instructor.create({ name: teacher }).then(object =>
+                resolve({ name: teacher, id: object.id }));
+            })
+          );
+        });
 
         // This comment can be refactored out later. It was just me typing
         // thoughts as fast as possible after I had this idea.
@@ -238,62 +205,59 @@ const persist = departments => {
         // use then on this variable and only perform an action once this has
         // compelted. This lets every merge table creation promise have access
         // to the values. This works because of closures.
-        let uniqueTeacherIds = Promise.all(createTeacherPromises)
+        let uniqueTeacherIds = Promise.all(createTeacherPromises);
 
-        let createTeacherIntervalPromises = []
+        let createTeacherIntervalPromises = [];
 
         intervals.forEach(interval => {
-          createTeacherIntervalPromises.push(new Promise(
-            (resolve, reject) => {
-              uniqueTeacherIds
-                .then(teachers => {
+          createTeacherIntervalPromises.push(
+            new Promise((resolve, reject) => {
+              uniqueTeacherIds.then(teachers => {
+                let matched_teachers = interval.teachers.map(
+                  name => teachers.find(i => i.name === name)
+                );
 
-                  let matched_teachers =
-                    interval.teachers
-                      .map(name => teachers.find(i => i.name === name))
+                //console.log("\n\nTEACHERS")
+                //console.log(interval.teachers)
 
-                  //console.log("\n\nTEACHERS")
-                  //console.log(interval.teachers)
+                //console.log("\nMATCHED TEACHERS:")
+                //console.log(matched_teachers)
 
-                  //console.log("\nMATCHED TEACHERS:")
-                  //console.log(matched_teachers)
+                // create an entry in the interval-intrsuctor merge
+                // table here for every interval and for every teacher.
+                // A single entry is created for each sub teacher for each
+                // interval. These may not have to be created in promises
+                // since we are never really going to use their return value.
 
-                  // create an entry in the interval-intrsuctor merge
-                  // table here for every interval and for every teacher.
-                  // A single entry is created for each sub teacher for each
-                  // interval. These may not have to be created in promises
-                  // since we are never really going to use their return value.
+                matched_teachers.forEach(teacher => {
+                  // What exactly is the model for a merge table?
+                  // And how exactly does a merge table even work?
+                  // I think I've got to watch some SQL videos
+                  // Tomorrow. It is 4:15 AM
 
-                  matched_teachers.forEach(teacher => {
-                    // What exactly is the model for a merge table?
-                    // And how exactly does a merge table even work?
-                    // I think I've got to watch some SQL videos
-                    // Tomorrow. It is 4:15 AM
+                  InstructorsIntervals.create({
+                    instructor_id: teacher.id,
+                    time_interval_id: interval.interval_id
+                  });
+                });
+              });
+            })
+          );
+        });
 
-                    InstructorsIntervals
-                      .create({
-                        instructor_id: teacher.id,
-                        time_interval_id: interval.interval_id,
-                      })
-                  })
+        console.log(unique_teachers);
 
-                })
-            }
-          ))
-        })
-
-        console.log(unique_teachers)
-
-        return createTeacherIntervalPromises
+        return createTeacherIntervalPromises;
       })
-      .then(promises => Promise.all(promises))
+      .then(promises => {
+        if (promises === undefined) return;
+        Promise.all(promises);
+      })
       .then(teachers => console.log(teachers))
       .catch(err => {
-        console.error(err)
-      })
+        console.error(err);
+      });
+  });
+};
 
-  })
-
-}
-
-module.exports = persist
+module.exports = persist;
