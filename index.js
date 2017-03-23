@@ -16,7 +16,7 @@ app.options("*", cors());
 
 app.listen(8080, () => console.log("listening"));
 
-scrape()
+scrape();
 
 // .then(function(re) {
 //   console.log(`Got ${re.length} departments`)
@@ -27,37 +27,259 @@ const Section = require("./models/section");
 const TimeInterval = require("./models/time-interval");
 const Course = require("./models/course");
 
+function processInput(input) {
+  const lower = input.toLowerCase();
+  const array = lower.split(" ");
+
+  return {
+    text: lower,
+    array: array,
+    rest: array.length > 1 ? lower.slice(lower.indexOf(" ")).trim() : ""
+  };
+}
+
+app.get("/department", (request, response) => {
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+
+  const department = request.query.dept;
+
+  Course.where("abbreviation", department.toUpperCase())
+    .query("orderBy", "number", "asc")
+    .fetchAll(fetch_object)
+    .then(courses => fixCourses(courses, response));
+});
+
+function fixCourses(courses, response) {
+  let new_courses = [];
+
+  courses.forEach(course => {
+    // Remove Course ID
+    let new_course = JSON.parse(JSON.stringify(course));
+    delete new_course.id;
+
+    let new_sections = [];
+
+    // Remove section ID and course_id
+    new_course.sections.forEach(section => {
+      let new_section = JSON.parse(JSON.stringify(section));
+      delete new_section.id;
+      delete new_section.course_id;
+
+      let new_time_intervals = [];
+
+      section.timeIntervals.forEach(ti => {
+        let new_ti = JSON.parse(JSON.stringify(ti));
+        delete new_ti.id;
+        delete new_ti.section_id;
+
+        let new_instructor = [];
+
+        ti.instructor.forEach(i => {
+          let new_i = JSON.parse(JSON.stringify(i));
+          delete new_i["_pivot_time_interval_id"];
+          delete new_i["_pivot_instructor_id"];
+
+          new_instructor.push(new_i);
+        });
+
+        new_ti.instructor = new_instructor;
+
+        new_time_intervals.push(new_ti);
+      });
+
+      new_section.timeIntervals = new_time_intervals;
+
+      new_sections.push(new_section);
+    });
+
+    new_course.sections = new_sections;
+
+    new_courses.push(new_course);
+  });
+
+  response.json(new_courses);
+}
+
+const fetch_object = {
+  withRelated: [
+    {
+      sections: qb => {
+        qb.column(
+          "id",
+          "course_id",
+          "number",
+          "title",
+          "enrollment_available",
+          "enrollment_current",
+          "enrollment_is_full",
+          "enrollment_total"
+        );
+        qb.orderBy("number");
+      }
+    },
+    {
+      "sections.timeIntervals": qb => {
+        qb.column(
+          "id",
+          "section_id",
+          "start",
+          "end",
+          "has_time",
+          "days",
+          "comments",
+          "location_building",
+          "location_room",
+          "is_lab",
+          "s_night",
+          "s_all_web",
+          "s_most_web",
+          "s_half_web",
+          "s_some_web",
+          "s_req_dept_perm",
+          "s_req_inst_perm",
+          "s_majors_only",
+          "s_cmi",
+          "s_cmi_written",
+          "s_cmi_spoken",
+          "s_cmi_tech",
+          "s_cmi_visual",
+          "s_svc"
+        );
+      }
+    },
+    {
+      "sections.timeIntervals.instructor": qb => qb.column("name")
+    }
+  ],
+  columns: [
+    "id",
+    "abbreviation",
+    "number",
+    "hours",
+    "full_title",
+    "description",
+    "comments"
+  ]
+};
+
 app.get("/", (request, response) => {
   let section_columns = ["id", "abbreviation", "number", "hours"];
 
+  const departments = ["math", "csc"];
+  const teachers = ["kooima"];
+
   response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-  // response.setHeader(
-  //   "Access-Control-Allow-Methods",
-  //   "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  // ); // If needed
-  // response.setHeader(
-  //   "Access-Control-Allow-Headers",
-  //   "X-Requested-With,contenttype,Content-Type,Accept"
-  // ); // If needed
-  // response.setHeader("Access-Control-Allow-Credentials", true); // If needed
 
-  console.log(request.query);
+  const input = processInput(request.query.input);
+  const { text, array, rest } = input;
 
-  console.log("here");
+  console.log("\nProcessing...");
+  console.log(input);
 
-  Course
-    //.collection()
-    .where("number", request.query.input || "1252")
-    .fetch({
-      withRelated: [
-        "sections",
-        "sections.timeIntervals",
-        "sections.timeIntervals.instructor"
-      ]
-    })
-    .then(courses => {
-      response.json(courses);
-    });
+  if (isNaN(array[0])) {
+    // MATH ...
+    if (departments.includes(array[0])) {
+      console.log("\t - Department Identified: " + array[0]);
+
+      if (isNaN(array[1])) {
+        console.log("\t - Search For Course Name: " + rest);
+        // MATH Graphy Theory ...
+
+        // .fetch({
+        //   withRelated: [{ sections: qb => qb.where("title", rest) }]
+        // })
+
+        Course.where("abbreviation", array[0].toUpperCase())
+          .fetchAll(fetch_object)
+          .then(courses => {
+            // All the code that follows is a shitty (but functional) effort to save space
+            // Bookshelf forces you to initially still include IDs in the column specifications
+            // so that it can make the join table relations when building a query.
+            // There is no good way to remove these except for the bad way that follows.
+            // If we ever want to allow visiting a course page, simply include the course_id
+            // instead of removing it.
+
+            let new_courses = [];
+
+            courses.forEach(course => {
+              // Remove Course ID
+              let new_course = JSON.parse(JSON.stringify(course));
+              delete new_course.id;
+
+              let new_sections = [];
+
+              // Remove section ID and course_id
+              new_course.sections.forEach(section => {
+                let new_section = JSON.parse(JSON.stringify(section));
+                delete new_section.id;
+                delete new_section.course_id;
+
+                let new_time_intervals = [];
+
+                section.timeIntervals.forEach(ti => {
+                  let new_ti = JSON.parse(JSON.stringify(ti));
+                  delete new_ti.id;
+                  delete new_ti.section_id;
+
+                  let new_instructor = [];
+
+                  ti.instructor.forEach(i => {
+                    let new_i = JSON.parse(JSON.stringify(i));
+                    delete new_i["_pivot_time_interval_id"];
+                    delete new_i["_pivot_instructor_id"];
+
+                    new_instructor.push(new_i);
+                  });
+
+                  new_ti.instructor = new_instructor;
+
+                  new_time_intervals.push(new_ti);
+                });
+
+                new_section.timeIntervals = new_time_intervals;
+
+                new_sections.push(new_section);
+              });
+
+              new_course.sections = new_sections;
+
+              new_courses.push(new_course);
+            });
+
+            response.json(new_courses);
+
+            // response.json(
+            //   courses.map(course => {
+            //     let new_course = Object.assign({}, course);
+            //     delete new_course[new_course];
+            //     return new_course;
+            //   })
+            // );
+          });
+      } else {
+        console.log("\t - Search For Number: " + rest);
+        // MATH 1550
+      }
+    } else if (teachers.includes(array[0])) {
+      console.log("\t - Teacher Identified: " + array[0]);
+      console.log("\t - teacher is " + array[0]);
+    } else {
+      console.log("\t - Search for Course Name: " + text);
+      // Graph Theory
+    }
+  }
+
+  // MATH 1550
+  // MATH Course Name
+  // Teacher Name
+  // Course Name
+  // Number
+
+  // Course.where("number", request.query.input || "1252") //.collection()
+  //   .fetch(fetch_object)
+  //   .then(courses => {
+  //     response.json(courses);
+  //   });
   // TimeInterval
   //   .collection()
   //   .fetch({

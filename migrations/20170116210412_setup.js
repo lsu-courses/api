@@ -1,107 +1,106 @@
 exports.up = (knex, Promise) => {
   return Promise.all([
     knex.schema.createTable("semesters", table => {
-      table.uuid("id").primary()
+      table.uuid("id").primary();
 
-      table.string("title")
-      table.boolean("archived")
+      table.string("title");
+      table.boolean("archived");
 
-      table.timestamps()
+      table.timestamps();
     }),
 
     knex.schema.createTable("courses", table => {
-      table.uuid("id").primary()
+      table.uuid("id").primary();
 
-      table.string("abbreviation")
-      table.string("number")
-      table.string("hours")
+      table.string("abbreviation");
+      table.string("number");
+      table.string("hours");
 
-      table.string("full_title")
-      table.text("description")
+      table.string("full_title");
+      table.text("description");
 
       //table.unique(["abbreviation", "number"])
 
-      table.string("specialEnrollment")
-      table.boolean("isComIntensive")
-      table.boolean("isWebBased")
+      table.string("specialEnrollment");
+      table.boolean("isComIntensive");
+      table.boolean("isWebBased");
 
       // Create PostgreSQL array field, of text
-      table.specificType("comments", "text[]")
+      table.specificType("comments", "text[]");
 
-      table.uuid("semester_id").references("semesters.id")
+      table.uuid("semester_id").references("semesters.id");
 
-      table.timestamps()
+      table.timestamps();
     }),
 
     knex.schema.createTable("instructors", table => {
-      table.uuid("id").primary()
+      table.uuid("id").primary();
 
-      table.string("name")
+      table.string("name");
 
-      table.timestamps()
+      table.timestamps();
     }),
 
     knex.schema.createTable("sections", table => {
-      table.uuid("id").primary()
+      table.uuid("id").primary();
 
-      table.string("number")
-      table.string("title")
-      table.string("enrollment_available")
-      table.string("enrollment_current")
-      table.string("enrollment_is_full")
-      table.string("enrollment_total")
+      table.string("number");
+      table.string("title");
+      table.string("enrollment_available");
+      table.string("enrollment_current");
+      table.string("enrollment_is_full");
+      table.string("enrollment_total");
 
-      table.uuid("course_id").references("courses.id")
+      table.uuid("course_id").references("courses.id");
 
-      table.timestamps()
+      table.timestamps();
     }),
 
     knex.schema.createTable("instructors_time_intervals", table => {
-      table.uuid("id").primary()
+      table.uuid("id").primary();
 
-      table.uuid("instructor_id").references("instructors.id")
-      table.uuid("time_interval_id").references("time_intervals.id")
-      
-      table.timestamps()
+      table.uuid("instructor_id").references("instructors.id");
+      table.uuid("time_interval_id").references("time_intervals.id");
+
+      table.timestamps();
     }),
 
     knex.schema.createTable("time_intervals", table => {
-      table.uuid("id").primary()
+      table.uuid("id").primary();
 
-      table.string("start")
-      table.string("end")
-      table.boolean("has_time")
-      table.specificType("days", "text[]")
-      table.specificType("comments", "text[]")
-      table.string("location_building")
-      table.string("location_room")
-      table.boolean("is_lab")
+      table.string("start");
+      table.string("end");
+      table.boolean("has_time");
+      table.specificType("days", "text[]");
+      table.specificType("comments", "text[]");
+      table.string("location_building");
+      table.string("location_room");
+      table.boolean("is_lab");
 
-      table.uuid("section_id").references("sections.id")
+      table.uuid("section_id").references("sections.id");
 
-      table.boolean("special_is_night")
-      table.boolean("special_is_all_web")
-      table.boolean("special_is_most_web")
-      table.boolean("special_is_half_web")
-      table.boolean("special_is_some_web")
+      table.boolean("s_night");
+      table.boolean("s_all_web");
+      table.boolean("s_most_web");
+      table.boolean("s_half_web");
+      table.boolean("s_some_web");
 
-      table.boolean("special_requires_dept_perm")
-      table.boolean("special_requires_inst_perm")
+      table.boolean("s_req_dept_perm");
+      table.boolean("s_req_inst_perm");
 
-      table.boolean("special_is_majors_only")
-      table.boolean("special_is_cmi")
-      table.boolean("special_is_cmi_written")
-      table.boolean("special_is_cmi_spoken")
-      table.boolean("special_is_cmi_tech")
-      table.boolean("special_is_cmi_visual")
+      table.boolean("s_majors_only");
+      table.boolean("s_cmi");
+      table.boolean("s_cmi_written");
+      table.boolean("s_cmi_spoken");
+      table.boolean("s_cmi_tech");
+      table.boolean("s_cmi_visual");
 
-      table.boolean("special_is_svc")
+      table.boolean("s_svc");
 
-      table.timestamps()
-    }),
-
-  ])
-}
+      table.timestamps();
+    })
+  ]);
+};
 
 exports.down = (knex, Promise) => {
   return Promise.all([
@@ -110,6 +109,6 @@ exports.down = (knex, Promise) => {
     knex.raw("DROP TABLE instructors CASCADE"),
     knex.raw("DROP TABLE sections CASCADE"),
     knex.raw("DROP TABLE instructors_time_intervals CASCADE"),
-    knex.raw("DROP TABLE time_intervals CASCADE"),
-  ])
-}
+    knex.raw("DROP TABLE time_intervals CASCADE")
+  ]);
+};
