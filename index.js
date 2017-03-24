@@ -4,6 +4,7 @@ const bookshelf = require("./bookshelf");
 const scrape = require("./scrapers");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const chalk = require("chalk")
 
 console.time("Time");
 
@@ -14,7 +15,9 @@ app.use(bodyParser.json());
 
 app.options("*", cors());
 
-app.listen(8080, () => console.log("listening"));
+const port = 8080
+
+app.listen(port, () => console.log(chalk.green(`\nListening on port ${port}\n`)));
 
 scrape();
 
@@ -173,16 +176,15 @@ app.get("/", (request, response) => {
   const input = processInput(request.query.input);
   const { text, array, rest } = input;
 
-  console.log("\nProcessing...");
-  console.log(input);
+  console.log(chalk.blue(`\nProcessing input: `) + chalk.green(`${text}`));
 
   if (isNaN(array[0])) {
     // MATH ...
     if (departments.includes(array[0])) {
-      console.log("\t - Department Identified: " + array[0]);
+      printSearchType('Department', array[0])
 
       if (isNaN(array[1])) {
-        console.log("\t - Search For Course Name: " + rest);
+        printSearchType('Course', rest)
         // MATH Graphy Theory ...
 
         // .fetch({
@@ -257,14 +259,13 @@ app.get("/", (request, response) => {
             // );
           });
       } else {
-        console.log("\t - Search For Number: " + rest);
+        printSearchType('Number', rest)
         // MATH 1550
       }
     } else if (teachers.includes(array[0])) {
-      console.log("\t - Teacher Identified: " + array[0]);
-      console.log("\t - teacher is " + array[0]);
+      printSearchType('Teacher', array[0])
     } else {
-      console.log("\t - Search for Course Name: " + text);
+      printSearchType('Course', text)
       // Graph Theory
     }
   }
@@ -290,3 +291,7 @@ app.get("/", (request, response) => {
   //   })
   //   .then(intervals => response.json({ intervals }))
 });
+
+const printSearchType = (type, text) => {
+  console.log(`\t` + chalk.magenta(type) + ` search: ${text}`)
+}
