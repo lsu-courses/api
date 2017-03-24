@@ -3,6 +3,8 @@ const request = require("request-promise");
 const cheerio = require("cheerio");
 
 const scrape = departments => {
+  console.log("\nScraping catalog courses...")
+
   const config = number => ({
     method: "post",
     uri: `http://catalog.lsu.edu/content.php?filter[cpage]=${number}&cur_cat_oid=14&expand=1&navoid=1068&print=1`
@@ -59,16 +61,10 @@ const handleRequestResponse = (body, departments) => {
     });
   });
 
-  console.log(info_sections.length);
-
   return {
     sections: info_sections,
     departments: departments
   };
-};
-
-processSections = (sections, departments) => {
-  console.log(departments);
 };
 
 const range = (low, high) => {

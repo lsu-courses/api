@@ -4,7 +4,7 @@ const bookshelf = require("./bookshelf");
 const scrape = require("./scrapers");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const chalk = require("chalk")
+const chalk = require("chalk");
 
 console.time("Time");
 
@@ -15,9 +15,10 @@ app.use(bodyParser.json());
 
 app.options("*", cors());
 
-const port = 8080
+const port = 8080;
 
-app.listen(port, () => console.log(chalk.green(`\nListening on port ${port}\n`)));
+app.listen(port, () =>
+  console.log(chalk.green(`\nListening on port ${port}\n`)));
 
 scrape();
 
@@ -181,10 +182,10 @@ app.get("/", (request, response) => {
   if (isNaN(array[0])) {
     // MATH ...
     if (departments.includes(array[0])) {
-      printSearchType('Department', array[0])
+      printSearchType("Department", array[0]);
 
       if (isNaN(array[1])) {
-        printSearchType('Course', rest)
+        printSearchType("Course", rest);
         // MATH Graphy Theory ...
 
         // .fetch({
@@ -259,13 +260,13 @@ app.get("/", (request, response) => {
             // );
           });
       } else {
-        printSearchType('Number', rest)
+        printSearchType("Number", rest);
         // MATH 1550
       }
     } else if (teachers.includes(array[0])) {
-      printSearchType('Teacher', array[0])
+      printSearchType("Teacher", array[0]);
     } else {
-      printSearchType('Course', text)
+      printSearchType("Course", text);
       // Graph Theory
     }
   }
@@ -293,5 +294,5 @@ app.get("/", (request, response) => {
 });
 
 const printSearchType = (type, text) => {
-  console.log(`\t` + chalk.magenta(type) + ` search: ${text}`)
-}
+  console.log(`\t` + chalk.magenta(type) + ` search: ${text}`);
+};

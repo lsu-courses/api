@@ -1,6 +1,7 @@
 const Promise = require("bluebird");
 const request = require("request-promise");
 const cheerio = require("cheerio");
+const chalk = require("chalk");
 
 const scrape = departments => {
   const config = department => ({
@@ -8,6 +9,9 @@ const scrape = departments => {
     uri: "http://appl101.lsu.edu/booklet2.nsf/68a84f901daef98386257b43006b778a?CreateDocument",
     body: `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Fall+2017&%25%25Surrogate_Department=1&Department=${department}`
   });
+
+  console.log('\nDept \tSections')
+  console.log('----------------')
 
   const departmentRequest = department =>
     request(config(department)).then(body => handleRequestResponse(body));
@@ -143,7 +147,11 @@ const parseLines = lines => {
     }
   }
 
-  console.log(sections);
+  if (sections.length > 0)
+    console.log(
+      chalk.green(sections[0].course.abbreviation) + ":\t" + sections.length
+    );
+
   return sections;
 };
 
@@ -168,7 +176,6 @@ const processComment = (currentSection, line) => {
   }
 
   if (line.toLowerCase().includes("reserved")) {
-    console.log(line);
     interval.special.info.isReserved = true;
   }
 
@@ -295,8 +302,6 @@ const addInterval = (currentSection, parsedLine) => {
   let number = parsedLine.section.number.length > 1
     ? parsedLine.section.number
     : "0" + parsedLine.section.number;
-
-  console.log(parsedLine);
 
   currentSection.section.intervals.push({
     teachers: parsedLine.section.teachers,
