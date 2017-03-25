@@ -19,7 +19,7 @@ app.set("bookshelf", bookshelf);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use((req, res, next) => {
-  response.setHeader(
+  res.setHeader(
     "Access-Control-Allow-Origin",
     process.env.WEBSITE_DOMAIN || "http://localhost:3000"
   );
