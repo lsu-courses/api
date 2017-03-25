@@ -48,9 +48,11 @@ function processInput(input) {
   };
 }
 
-const cache = require("express-redis-cache")({
-  host: process.env.REDIS_URL || "localhost"
-});
+const client = require("redis").createClient(
+  process.env.REDIS_URL || "redis://localhost:6379"
+);
+
+const cache = require("express-redis-cache")({ client });
 
 app.get("/department", cache.route(), (request, response) => {
   const department = request.query.dept;
