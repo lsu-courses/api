@@ -65,6 +65,7 @@ app.get("/department", (request, response) => {
   const department = request.query.dept;
 
   console.time("Department Query");
+  printSearchType("Department", department);
 
   Course.where("abbreviation", department.toUpperCase())
     .query("orderBy", "number", "asc")
