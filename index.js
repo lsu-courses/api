@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const bookshelf = require("./bookshelf");
+const { bookshelf, knex } = require("./bookshelf");
 const scrape = require("./scrapers");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -20,12 +20,26 @@ const port = 8080;
 app.listen(port, () =>
   console.log(chalk.green(`\nListening on port ${port}\n`)));
 
-scrape();
+const interval_ms = 600000;
 
-// .then(function(re) {
-//   console.log(`Got ${re.length} departments`)
-//   console.timeEnd("Time")
-// })
+const delete_query = `
+  DELETE FROM instructors_time_intervals;
+  DELETE FROM time_intervals;
+  DELETE FROM sections;
+  DELETE FROM instructors;
+  DELETE FROM courses;
+`;
+
+function onInterval() {
+  knex
+    .raw(delete_query)
+    .then(() => console.log(chalk.green("Database cleared\n")))
+    .then(scrape);
+}
+
+onInterval();
+
+setInterval(onInterval, interval_ms);
 
 const Section = require("./models/section");
 const TimeInterval = require("./models/time-interval");

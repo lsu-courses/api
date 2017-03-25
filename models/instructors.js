@@ -1,8 +1,8 @@
-const bookshelf = require("../bookshelf")
-require("./section")
+const { bookshelf } = require("../bookshelf");
+require("./section");
 
 const Instructors = bookshelf.Collection.extend({
-  model: "instructor",
-})
+  model: "instructor"
+});
 
-module.exports = bookshelf.collection("Instructors", Instructors)
+module.exports = bookshelf.collection("Instructors", Instructors);

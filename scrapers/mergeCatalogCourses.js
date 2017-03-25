@@ -1,10 +1,6 @@
 const merge = object => {
   console.log("\n Merging catalog courses");
 
-  console.log(object);
-
-  console.log("AFTER OBJECT");
-
   let sections = object.sections;
   let departments = object[0].departments;
 
@@ -25,7 +21,6 @@ const merge = object => {
     if (dept === undefined) return;
 
     dept.forEach(course => {
-
       let newCourse = Object.assign({}, course);
       const { abbreviation, number } = course.course;
 
@@ -47,10 +42,6 @@ const merge = object => {
     newDepartments.push(newDept);
   });
 
-  console.log("RETURNING NEW DEPARTMENTS");
-  console.log(newDepartments.length);
-
-  console.log(JSON.stringify(newDepartments, null, 2));
   return newDepartments;
 };
 

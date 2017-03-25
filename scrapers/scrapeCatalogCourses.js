@@ -3,7 +3,7 @@ const request = require("request-promise");
 const cheerio = require("cheerio");
 
 const scrape = departments => {
-  console.log("\nScraping catalog courses...")
+  console.log("\nScraping catalog courses...");
 
   const config = number => ({
     method: "post",
@@ -15,7 +15,7 @@ const scrape = departments => {
       handleRequestResponse(body, departments));
 
   return Promise.map(range(1, 50), department => pageRequest(department), {
-    concurrency: 5
+    concurrency: 15
   });
 };
 
@@ -23,6 +23,8 @@ const handleRequestResponse = (body, departments) => {
   let $ = cheerio.load(body);
 
   let table = $(".block_content_outer .block_content table").last();
+
+  console.log("Loaded Catalog Page: Now scraping content of page");
 
   if (!table) console.log("SAD");
 

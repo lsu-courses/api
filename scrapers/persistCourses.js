@@ -26,6 +26,8 @@ const persist = departments => {
       if (!courseBuffer.includes(number)) {
         courseCreatePromises.push(
           new Promise((resolve, reject) => {
+            console.log(`Persisting ${abbreviation} ${number}`);
+
             resolve(
               Course.create({
                 abbreviation,
@@ -84,10 +86,8 @@ const persist = departments => {
                 enrollment_current: current,
                 enrollment_is_full: is_full,
                 enrollment_total: total
-              })// of time intervals) and then we resolve this section creation promise // ID to the full section object (which contains things like an array // created section's ID in the database. We then attach this database // 3.2.1 The create method returns an object that contains the newly
-              // with the full section object, which now has the section database ID.
-              // We will later use this ID to make relations to time intervals in the DB.
-              .then(object => {
+              }).then(object => {
+                // We will later use this ID to make relations to time intervals in the DB. // with the full section object, which now has the section database ID. // of time intervals) and then we resolve this section creation promise // ID to the full section object (which contains things like an array // created section's ID in the database. We then attach this database // 3.2.1 The create method returns an object that contains the newly
                 section.section_id = object.attributes.id;
                 resolve(section);
               });
@@ -112,8 +112,6 @@ const persist = departments => {
           intervals.forEach(interval => {
             createTimeIntervalPromises.push(
               new Promise((resolve, reject) => {
-                console.log("inside interval promise\n\n");
-
                 // "Special" information on a time interval
                 // are things that are determined and help
                 // provide context.
@@ -151,8 +149,6 @@ const persist = departments => {
                   s_svc: special.isServiceLearning
                 }).then(object => {
                   interval.interval_id = object.id;
-                  console.log("\ninterval being resolved");
-                  console.log(interval);
                   resolve(interval);
                 });
               })
@@ -172,9 +168,6 @@ const persist = departments => {
         // the map)
 
         if (intervals.length < 1) return;
-
-        console.log("\n\n AFTER CREATION");
-        console.log(JSON.stringify(intervals, null, 2));
 
         let teachers = intervals
           .map(interval => interval.teachers)
@@ -213,15 +206,8 @@ const persist = departments => {
           createTeacherIntervalPromises.push(
             new Promise((resolve, reject) => {
               uniqueTeacherIds.then(teachers => {
-                let matched_teachers = interval.teachers.map(
-                  name => teachers.find(i => i.name === name)
-                );
-
-                //console.log("\n\nTEACHERS")
-                //console.log(interval.teachers)
-
-                //console.log("\nMATCHED TEACHERS:")
-                //console.log(matched_teachers)
+                let matched_teachers = interval.teachers.map(name =>
+                  teachers.find(i => i.name === name));
 
                 // create an entry in the interval-intrsuctor merge
                 // table here for every interval and for every teacher.
@@ -245,15 +231,13 @@ const persist = departments => {
           );
         });
 
-        console.log(unique_teachers);
-
         return createTeacherIntervalPromises;
       })
       .then(promises => {
         if (promises === undefined) return;
         Promise.all(promises);
       })
-      .then(teachers => console.log(teachers))
+      //.then(teachers => console.log("teachers"))
       .catch(err => {
         console.error(err);
       });
