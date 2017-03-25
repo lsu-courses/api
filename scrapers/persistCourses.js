@@ -3,9 +3,10 @@ const Section = require("../models/section");
 const TimeInterval = require("../models/time-interval");
 const Instructor = require("../models/instructor");
 const InstructorsIntervals = require("../models/instructors-intervals");
-const pretty = require("../utils/pretty");
 
 const persist = departments => {
+  console.log(`\nPersisting courses...`)
+
   departments.forEach(sections => {
     let courseBuffer = [];
     let courseCreatePromises = [];
@@ -26,8 +27,6 @@ const persist = departments => {
       if (!courseBuffer.includes(number)) {
         courseCreatePromises.push(
           new Promise((resolve, reject) => {
-            console.log(`Persisting ${abbreviation} ${number}`);
-
             resolve(
               Course.create({
                 abbreviation,
@@ -105,9 +104,6 @@ const persist = departments => {
 
         sections.forEach(section => {
           const { section_id, section: { intervals } } = section;
-
-          console.log(`Processing intervals found in ${section_id}`);
-          console.log(`There are ${intervals.length} intervals`);
 
           intervals.forEach(interval => {
             createTimeIntervalPromises.push(

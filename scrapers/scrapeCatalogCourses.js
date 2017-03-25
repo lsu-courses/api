@@ -24,8 +24,6 @@ const handleRequestResponse = (body, departments) => {
 
   let table = $(".block_content_outer .block_content table").last();
 
-  console.log("Loaded Catalog Page: Now scraping content of page");
-
   if (!table) console.log("SAD");
 
   // table.each(function(i, elem) {

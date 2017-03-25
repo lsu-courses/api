@@ -1,5 +1,5 @@
 const merge = object => {
-  console.log("\n Merging catalog courses");
+  console.log("\nMerging catalog courses...");
 
   let sections = object.sections;
   let departments = object[0].departments;
@@ -10,7 +10,6 @@ const merge = object => {
 
   object.forEach(obj => {
     obj.sections.forEach(course => {
-      console.log(course);
       courses.push(course);
     });
   });
