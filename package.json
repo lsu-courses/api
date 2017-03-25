@@ -23,6 +23,7 @@
     "cheerio": "^0.22.0",
     "cors": "^2.8.1",
     "express": "^4.14.0",
+    "express-redis-cache": "^0.5.1",
     "knex": "^0.12.6",
     "pg": "^6.1.2",
     "pgtools": "^0.2.3",
