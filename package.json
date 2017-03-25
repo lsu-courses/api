@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "db:create": "node utils/create-db.js"
+    "db:create": "node utils/create-db.js",
+    "heroku-prebuild": "knex migrate:latest"
   },
   "author": "",
   "license": "ISC",

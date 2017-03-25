@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 
 app.options("*", cors());
 
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 app.listen(port, () =>
   console.log(chalk.green(`\nListening on port ${port}\n`)));
@@ -57,14 +57,22 @@ function processInput(input) {
 }
 
 app.get("/department", (request, response) => {
-  response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  response.setHeader(
+    "Access-Control-Allow-Origin",
+    process.env.WEBSITE_DOMAIN || "http://localhost:3000"
+  );
 
   const department = request.query.dept;
+
+  console.time("Department Query");
 
   Course.where("abbreviation", department.toUpperCase())
     .query("orderBy", "number", "asc")
     .fetchAll(fetch_object)
-    .then(courses => fixCourses(courses, response));
+    .then(courses => {
+      console.timeEnd("Department Query");
+      return fixCourses(courses, response);
+    });
 });
 
 function fixCourses(courses, response) {
