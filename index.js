@@ -1,10 +1,16 @@
 const express = require("express");
-const app = express();
-const { bookshelf, knex } = require("./bookshelf");
-const scrape = require("./scrapers");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const chalk = require("chalk");
+const { bookshelf, knex } = require("./bookshelf");
+const scrape = require("./scrapers");
+const {
+  setScrapeInterval,
+  emptyDatabaseThenScrape
+} = require("./utils/scrapeInterval");
+
+emptyDatabaseThenScrape();
+setScrapeInterval();
 
 const app = express();
 
@@ -27,27 +33,6 @@ const port = process.env.PORT || 8080;
 app.listen(port, () =>
   console.log(chalk.green(`\nListening on port ${port}\n`)));
 
-const interval_ms = 600000;
-
-const delete_query = `
-  DELETE FROM instructors_time_intervals;
-  DELETE FROM time_intervals;
-  DELETE FROM sections;
-  DELETE FROM instructors;
-  DELETE FROM courses;
-`;
-
-function onInterval() {
-  knex
-    .raw(delete_query)
-    .then(() => console.log(chalk.green("Database cleared\n")))
-    .then(scrape);
-}
-
-onInterval();
-
-setInterval(onInterval, interval_ms);
-
 const Section = require("./models/section");
 const TimeInterval = require("./models/time-interval");
 const Course = require("./models/course");
@@ -67,9 +52,10 @@ app.get("/department", (request, response) => {
   const department = request.query.dept;
 
   console.time("Department Query");
-  printSearchType("Department", department);
 
-  console.log(chalk.blue(`\nProcessing department: `) + chalk.green(`${department}`));
+  console.log(
+    chalk.blue(`\nProcessing department: `) + chalk.green(`${department}`)
+  );
 
   Course.where("abbreviation", department.toUpperCase())
     .query("orderBy", "number", "asc")

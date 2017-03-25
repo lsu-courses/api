@@ -10,6 +10,6 @@ const run = () =>
     .then(scrapeCatalogCourses)
     .then(mergeCatalogCourses)
     .then(persistCourses)
-    .then(() => console.log(`\nDone. Server ready.\n`));
+    .then(() => console.log(`\nScraping completed.\n`));
 
 module.exports = run;
