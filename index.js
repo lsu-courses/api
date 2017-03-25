@@ -6,12 +6,19 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const chalk = require("chalk");
 
-console.time("Time");
+const app = express();
 
 app.set("bookshelf", bookshelf);
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use((req, res, next) => {
+  response.setHeader(
+    "Access-Control-Allow-Origin",
+    process.env.WEBSITE_DOMAIN || "http://localhost:3000"
+  );
+  next();
+});
 
 app.options("*", cors());
 
@@ -57,15 +64,12 @@ function processInput(input) {
 }
 
 app.get("/department", (request, response) => {
-  response.setHeader(
-    "Access-Control-Allow-Origin",
-    process.env.WEBSITE_DOMAIN || "http://localhost:3000"
-  );
-
   const department = request.query.dept;
 
   console.time("Department Query");
   printSearchType("Department", department);
+
+  console.log(chalk.blue(`\nProcessing department: `) + chalk.green(`${department}`));
 
   Course.where("abbreviation", department.toUpperCase())
     .query("orderBy", "number", "asc")
@@ -194,13 +198,8 @@ app.get("/", (request, response) => {
 
   const departments = ["math", "csc"];
   const teachers = ["kooima"];
-
-  response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-
   const input = processInput(request.query.input);
   const { text, array, rest } = input;
-
-  console.log(chalk.blue(`\nProcessing input: `) + chalk.green(`${text}`));
 
   if (isNaN(array[0])) {
     // MATH ...
