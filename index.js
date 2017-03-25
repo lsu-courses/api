@@ -48,7 +48,11 @@ function processInput(input) {
   };
 }
 
-app.get("/department", (request, response) => {
+const cache = require("express-redis-cache")({
+  host: process.env.REDIS_URL || "localhost"
+});
+
+app.get("/department", cache.route(), (request, response) => {
   const department = request.query.dept;
 
   console.time("Department Query");
