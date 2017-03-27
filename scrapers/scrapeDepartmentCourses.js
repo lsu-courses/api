@@ -10,8 +10,8 @@ const scrape = departments => {
     body: `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Fall+2017&%25%25Surrogate_Department=1&Department=${department}`
   });
 
-  console.log('\nDept \tSections')
-  console.log('----------------')
+  console.log("\nDept \tSections");
+  console.log("----------------");
 
   const departmentRequest = department =>
     request(config(department)).then(body => handleRequestResponse(body));
@@ -346,18 +346,12 @@ const parseIntervalLine = line => {
   const isNight = timeInterval.includes("N");
   const dayArray = [];
 
-  if (days.includes("H"))
-    if (days.split("T").length - 1 === 2)
-      Array.prototype.push.apply(dayArray, ["TUESDAY", "THURSDAY"]);
-    else
-      dayArray.push("THURSDAY");
-  else {
-    if (days.includes("M")) dayArray.push("MONDAY");
-    if (days.charAt(1) === "T") dayArray.push("TUESDAY");
-    if (days.includes("W")) dayArray.push("WEDNESDAY");
-    if (days.charAt(3) === "T") dayArray.push("THURSDAY");
-    if (days.includes("F")) dayArray.push("FRIDAY");
-  }
+  if (days.includes("M")) dayArray.push("MONDAY");
+  if (days.charAt(1) === "T") dayArray.push("TUESDAY");
+  if (days.includes("W")) dayArray.push("WEDNESDAY");
+  if (days.charAt(3) === "T" || days.includes("H")) dayArray.push("THURSDAY");
+  if (days.includes("F")) dayArray.push("FRIDAY");
+
   const roomNumber = line.slice(79, 84).trim();
   const buildingName = line.slice(84, 99).trim();
 
