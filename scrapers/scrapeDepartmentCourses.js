@@ -24,7 +24,7 @@ const scrape = departments => {
 
 const escapeDepartment = department =>
   department
-    .replace(/%s/g, "+")
+    .replace(/\s+/g, "+")
     .replace(/&/g, "%26")
     .replace(/\'/g, "%27")
     .replace(/,/g, "%2C");
