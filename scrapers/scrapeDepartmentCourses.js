@@ -14,20 +14,29 @@ const scrape = departments => {
   console.log("----------------");
 
   const departmentRequest = department =>
-    request(config(department)).then(body => handleRequestResponse(body));
+    request(config(escapeDepartment(department))).then(body =>
+      handleRequestResponse(department, body));
 
   return Promise.map(departments, department => departmentRequest(department), {
     concurrency: Infinity
   });
 };
 
-module.exports = scrape;
+const escapeDepartment = department =>
+  department
+    .replace(/%s/g, "+")
+    .replace(/&/g, "%26")
+    .replace(/\'/g, "%27")
+    .replace(/,/g, "%2C");
 
-const handleRequestResponse = body => {
+const handleRequestResponse = (department, body) => {
   let $ = cheerio.load(body);
   let pre = $("pre").html();
 
-  if (!pre) return;
+  if (!pre) {
+    console.log(chalk.red(`${department}: no courses found`));
+    return;
+  }
 
   let lines = pre.split("\n").filter(str => str.trim().length > 0);
   return parseLines(lines);
@@ -397,3 +406,5 @@ const parseIntervalLine = line => {
     }
   };
 };
+
+module.exports = scrape;
