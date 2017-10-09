@@ -9,7 +9,7 @@
     "scrape": "node scrapers/scrape.js",
     "dev": "nodemon index.js",
     "db:create": "node utils/create-db.js",
-    "heroku-prebuild": "knex migrate:latest"
+    "heroku-prebuild": "yarn install && knex migrate:latest"
   },
   "author": "",
   "license": "ISC",
