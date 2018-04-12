@@ -8,7 +8,7 @@ const scrape = departments => {
     method: "post",
     uri:
       "http://appl101.lsu.edu/booklet2.nsf/68a84f901daef98386257b43006b778a?CreateDocument",
-    body: `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Spring+2018&%25%25Surrogate_Department=1&Department=${department}`,
+    body: `%25%25Surrogate_SemesterDesc=1&SemesterDesc=Fall+2018&%25%25Surrogate_Department=1&Department=${department}`,
   })
 
   console.log("\nDept \tSections")
